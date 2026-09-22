@@ -11,6 +11,13 @@ deduplicate them, validate geography, rank them, and report what changed since t
 
 Project root: `~/nyc-apartment-search/` (override if the user names a different path).
 
+**Expect most major aggregators (StreetEasy, RentHop, Apartments.com, Realtor.com) to come back
+`BLOCKED_OR_MANUAL_REVIEW_REQUIRED`** — their robots.txt/ToS forbid it, and this skill's hard rule
+below means it won't route around that. Zillow allows only its rental search-index pages, not
+individual listings. Real coverage comes from brokerage and property-management sites, most of
+which are open — see `references/sources.md` for the current, periodically re-checked status of
+each platform. This is expected, correct behavior, not a broken source.
+
 ## Hard rules — never violate
 
 - **Read-only toward the outside world.** Never submit an application, contact a broker, send a

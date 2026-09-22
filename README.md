@@ -10,8 +10,13 @@ neighborhood or household shape.
 ## What it does
 
 - Scaffolds a local Python tool under `~/nyc-apartment-search/` on first run.
-- Crawls public rental listings (StreetEasy, Zillow, Apartments.com, Realtor.com, RentHop,
-  brokerages, property managers) — public pages only, respecting robots.txt and site terms.
+- Crawls public rental listings — public pages only, respecting robots.txt and site terms, never
+  bypassing access controls. In practice that means real coverage comes mostly from **brokerages
+  and property managers**, whose own inventory pages are usually open. The big aggregators
+  (StreetEasy, RentHop, Apartments.com, Realtor.com) forbid scraping in their robots.txt/ToS and
+  will correctly come back `BLOCKED_OR_MANUAL_REVIEW_REQUIRED`; Zillow allows only its search-index
+  pages, not individual listings. See `references/sources.md` for the current per-platform status
+  — that's expected, ToS-respecting behavior, not a broken source.
 - Normalizes, deduplicates, and geographically filters listings.
 - Classifies pet policy, freshness (`ACTIVE` / `STALE` / `OFF_MARKET` / etc.), and scam risk.
 - Ranks active listings 0–100 against a configurable rubric.

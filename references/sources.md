@@ -18,19 +18,38 @@ the URL and what was attempted, then move on. Blocked sources get their own sect
 
 ## Source list
 
-Start with whichever sources are most accessible under the rules above, then widen.
+Start with whichever sources are most accessible under the rules above, then widen. In practice,
+most real coverage comes from brokerages and property managers, not the major aggregators — see
+below.
 
-**Major rental platforms** — StreetEasy, Zillow, Apartments.com, Realtor.com, RentHop
+**Known access status of the major rental platforms** (checked 2026-09-22 against live
+robots.txt/ToS — re-verify periodically, sites change these):
+
+| Platform | Status | Basis |
+| --- | --- | --- |
+| StreetEasy | `BLOCKED_OR_MANUAL_REVIEW_REQUIRED` | robots.txt disallows `/rental/*` |
+| RentHop | `BLOCKED_OR_MANUAL_REVIEW_REQUIRED` | Cloudflare WAF challenge blocks even fetching robots.txt |
+| Apartments.com | `BLOCKED_OR_MANUAL_REVIEW_REQUIRED` | Edge/WAF returns Access Denied on robots.txt itself |
+| Realtor.com | `BLOCKED_OR_MANUAL_REVIEW_REQUIRED` | robots.txt opens with an explicit legal notice that scraping is unauthorized without written permission |
+| Zillow | Partial | robots.txt allows the rental search-index pages (`/homes/for_rent/$` and friends) and a for-rent sitemap, but disallows `/homes/` broadly otherwise — treat individual listing detail pages as not clearly allowed |
+
+Don't try to route around any of these (no proxy rotation, no headless-browser evasion, no
+alternate hostnames) — that would violate the hard rule above. Record each as
+`BLOCKED_OR_MANUAL_REVIEW_REQUIRED` (or Zillow's index-only partial) and move on; this is the
+correct, expected outcome for most runs, not a failure to fix.
 
 **Brokerages** — Compass, Corcoran, Douglas Elliman, BOND New York, Brown Harris Stevens,
-Sotheby's and local NYC affiliates
+Sotheby's and local NYC affiliates. These are the primary real source of coverage: most publish
+their own rental inventory on pages robots.txt leaves open.
 
 **Property managers / owners** — Glenwood, Rose Associates, Rudin Management, Equity Residential,
 Manhattan Skyline, Related Rentals, UES Management, PREX, plus other reputable Upper East Side
-management companies discovered along the way
+management companies discovered along the way. Same story — usually open, and often the freshest
+listing data since it comes straight from the landlord.
 
 Publicly accessible individual broker and management-company inventory pages count too. Record any
-newly discovered reputable source in `config.yaml` so later runs pick it up.
+newly discovered reputable source in `config.yaml` so later runs pick it up. Check each new
+source's own robots.txt/ToS before adding it — don't assume it's open because a peer site is.
 
 ## Per-source discovery procedure
 

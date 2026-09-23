@@ -1,4 +1,8 @@
-"""0-100 ranking rubric. Scores ACTIVE / LIKELY_ACTIVE listings only."""
+"""0-100 ranking rubric. Scores ACTIVE / LIKELY_ACTIVE listings only.
+
+Note: `preferences.elevator_above_floor` isn't scored here (or filtered anywhere) -- listing.floor
+is free text ("5", "PH", "Garden", ...) with no parser to compare it against a numeric threshold.
+See the comment above that field in assets/config.yaml before wiring it in."""
 from __future__ import annotations
 
 import statistics

@@ -36,12 +36,18 @@ move:
 
 preferences:
   # No default -- asked during first-time setup. null means no preference; otherwise "required"
-  # (hard filter) or "preferred" (ranking boost, not a filter).
+  # (hard filter -- app/parsers/preferences.py) or "preferred" (ranking boost only --
+  # app/parsers/scoring.py).
   in_unit_laundry: null
   dishwasher: null
-  elevator_above_floor: null
   no_fee: null
   rent_stabilized: null
+  doorman: null
+  # Known gap: not wired into any filter or ranking logic yet. listing.floor is a free-text
+  # string ("5", "PH", "Garden", ...) and there's no parser to compare it against a numeric
+  # threshold -- rather than fabricate that comparison, this is tracked as a real field here
+  # but currently has no effect. Fix properly (add a floor parser) before relying on it.
+  elevator_above_floor: null
 
 search:
   request_delay_seconds: 3

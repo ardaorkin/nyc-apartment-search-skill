@@ -18,6 +18,7 @@ from parsers.address import classify_geo, extract_street_number
 from parsers.dedupe import deduplicate
 from parsers.freshness import classify_freshness
 from parsers.pets import household_pet_accepted
+from parsers.preferences import required_preference_rejections
 from parsers.risk import application_flags, assess_risk
 from parsers.scoring import score_listing
 from reports import load_previous_snapshot, save_snapshot, write_changes, write_csv_json, write_shortlist
@@ -101,9 +102,10 @@ def run_adapters(config: dict, use_cache: bool, only: list[str] | None) -> tuple
     return listings, blocked, raw_count
 
 
-def apply_geo_and_pet_filters(listings: list[Listing], config: dict) -> tuple[list[Listing], list[tuple[Listing, str]]]:
+def apply_filters(listings: list[Listing], config: dict) -> tuple[list[Listing], list[tuple[Listing, str]]]:
     location = config.get("location", {})
     household = config.get("household", {})
+    preferences = config.get("preferences", {})
     has_dog = bool(household.get("dogs"))
     has_cat = bool(household.get("cats"))
 
@@ -112,8 +114,13 @@ def apply_geo_and_pet_filters(listings: list[Listing], config: dict) -> tuple[li
 
     for listing in listings:
         cross_street_number = extract_street_number(listing.address)
+        # No adapter threads a real per-listing borough through today -- guessing
+        # "Manhattan" here (as this used to) is wrong for any other borough and
+        # silently rejects every real listing as OUT_OF_RANGE. None is honest: when
+        # a borough filter is configured, classify_geo already flags unknown-borough
+        # listings as GEOGRAPHY_NEEDS_CONFIRMATION instead of rejecting them.
         listing.geo_status = classify_geo(
-            listing_borough="Manhattan" if listing.neighborhood else None,
+            listing_borough=None,
             listing_neighborhood=listing.neighborhood,
             cross_street_number=cross_street_number,
             location_config=location,
@@ -127,6 +134,11 @@ def apply_geo_and_pet_filters(listings: list[Listing], config: dict) -> tuple[li
             if not accepted:
                 rejected.append((listing, f"pet policy excludes household pet(s): {listing.pet_policy or listing.pet_status}"))
                 continue
+
+        preference_rejections = required_preference_rejections(listing, preferences)
+        if preference_rejections:
+            rejected.append((listing, "; ".join(preference_rejections)))
+            continue
 
         kept.append(listing)
 
@@ -196,8 +208,8 @@ def main() -> None:
         listing.first_seen = listing.first_seen or now.date()
         listing.last_seen = now.date()
 
-    after_geo, rejected = apply_geo_and_pet_filters(raw_listings, config)
-    after_pets = len(after_geo)  # pet filtering happens inside apply_geo_and_pet_filters
+    after_geo, rejected = apply_filters(raw_listings, config)
+    after_pets = len(after_geo)  # pet/preference filtering happens inside apply_filters
     deduped = deduplicate(after_geo)
     enrich(deduped, config)
 

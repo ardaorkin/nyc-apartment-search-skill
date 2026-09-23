@@ -38,17 +38,32 @@ def _expand_token(token: str) -> str:
     return token
 
 
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+# str.title() capitalizes the first letter after ANY non-alpha character, which is
+# wanted for e.g. "4th" -> "4Th" (kept, see test_normalize_expands_abbreviations) but
+# wrong for a possessive/contraction apostrophe: "claridge's".title() -> "Claridge'S".
+# Covers both the ASCII apostrophe and the Unicode right single quote (U+2019) --
+# a real source (Manhattan Skyline) uses the latter, not the former.
+_APOSTROPHE_CAP_RE = re.compile(r"(['’])([A-Z])")
+
+
 def normalize_address(raw: Optional[str]) -> Optional[str]:
     """Expand directional/street-type abbreviations and ordinal suffixes, strip unit
     designators (returned separately by extract_unit), collapse whitespace/case for
-    comparison purposes."""
+    comparison purposes.
+
+    Also strips HTML markup -- some sources' "display name" fields are meant for HTML
+    rendering (e.g. a trademark symbol as "West River House<sup>&reg;</sup>") and
+    aren't safe to treat as plain text as-is."""
     if not raw or not raw.strip():
         return None
-    without_unit = _UNIT_RE.sub("", raw).strip().rstrip(",")
+    no_html = _HTML_TAG_RE.sub("", raw)
+    without_unit = _UNIT_RE.sub("", no_html).strip().rstrip(",")
     tokens = without_unit.replace(",", " ").split()
     expanded = [_expand_token(t) for t in tokens]
     normalized = " ".join(expanded)
-    return re.sub(r"\s+", " ", normalized).strip().title()
+    titled = re.sub(r"\s+", " ", normalized).strip().title()
+    return _APOSTROPHE_CAP_RE.sub(lambda m: m.group(1) + m.group(2).lower(), titled)
 
 
 def extract_unit(raw: Optional[str]) -> Optional[str]:

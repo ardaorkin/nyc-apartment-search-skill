@@ -20,7 +20,11 @@ just leaves that field `null` ("no preference" / "no restriction"), never a gues
    - **Budget** — optional. "Max monthly rent?"
    - **Move timing** — optional. "Target move-in date, and how flexible are you on it?"
    - **Preferences** — optional. "Any must-haves or nice-to-haves? (in-unit laundry, dishwasher,
-     elevator/floor, no-fee, rent-stabilized, etc.)"
+     doorman, no-fee, rent-stabilized, etc.)" For each, "required" hard-filters listings that
+     explicitly lack it; "preferred" only boosts ranking. If the user mentions an elevator/floor
+     preference, write it to `elevator_above_floor` but tell them plainly it's not wired into
+     filtering or ranking yet (see the comment above that field in `assets/config.yaml` for why)
+     — don't imply it's being applied when it isn't.
    - **Identity intro** — optional. "A short intro for drafted inquiry messages — your name and
      one line of context. Only used for message drafts; the tool never sends anything itself."
 2. Nothing here is required. If the user skips everything, still create the config — every

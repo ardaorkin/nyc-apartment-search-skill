@@ -38,6 +38,12 @@ each platform. This is expected, correct behavior, not a broken source.
   or send a Slack message unless the user explicitly says yes *in this conversation* — a past yes
   doesn't carry forward, and neither does inferring consent from context. See Step 7.
 
+## Step 0 — First-run intro
+
+If this is the first invocation of this skill in the current session, read and display
+[INTRO.md](INTRO.md) exactly as-is, then continue below. Skip on subsequent invocations within
+the same session.
+
 ## Step 1 — Scaffold if the project doesn't exist
 
 Check for `~/nyc-apartment-search/`. If absent, create it:
@@ -162,6 +168,7 @@ to bury the uninstall step somewhere the user has to go looking for it.
 
 ## References
 
+- `INTRO.md` — first-run banner (Step 0)
 - `references/data-model.md` — required listing fields and status enums
 - `references/sources.md` — source list, discovery procedure, access rules
 - `references/scoring-and-output.md` — ranking rubric, risk checks, report formats

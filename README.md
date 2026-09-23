@@ -1,5 +1,7 @@
 # nyc-apartment-search
 
+**Version 1.0.0** — see [CHANGELOG.md](CHANGELOG.md).
+
 A [Claude Code](https://claude.com/claude-code) skill that searches and re-checks public NYC rental
 listings, maintaining a deduplicated, ranked, change-tracked shortlist over time.
 

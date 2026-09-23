@@ -1,6 +1,7 @@
 ---
 name: nyc-apartment-search
-description: Search and re-check public New York City rental listings — NYC is the one fixed, non-configurable setting; everything else (area within the city, household, bedrooms, budget, move timing, preferences) starts with no default and is asked on first run, written to config.yaml, and mutable anytime after. Maintains a deduplicated, ranked, change-tracked shortlist. Scaffolds and operates a local Python tool that writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
+version: 1.0.0
+description: (v1.0.0) Search and re-check public New York City rental listings — NYC is the one fixed, non-configurable setting; everything else (area within the city, household, bedrooms, budget, move timing, preferences) starts with no default and is asked on first run, written to config.yaml, and mutable anytime after. Maintains a deduplicated, ranked, change-tracked shortlist. Scaffolds and operates a local Python tool that writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
 user-invocable: true
 ---
 
@@ -199,6 +200,7 @@ to bury the uninstall step somewhere the user has to go looking for it.
 
 ## References
 
+- `CHANGELOG.md` — version history
 - `INTRO.md` — first-run banner (Step 0)
 - `FIRST-TIME-SETUP.md` — config creation wizard (read only when `config.yaml` is missing)
 - `references/data-model.md` — required listing fields and status enums
@@ -207,3 +209,10 @@ to bury the uninstall step somewhere the user has to go looking for it.
 - `references/scheduling.md` — cron/launchd setup and teardown (read only after the user opts in)
 - `references/slack-notifications.md` — Slack digest setup and teardown (read only after the user opts in)
 - `assets/config.yaml` — starter configuration
+
+## Versioning
+
+`version:` in this file's frontmatter, the `(vX.Y.Z)` prefix on `description` above, and the
+version line in `INTRO.md` must always match. Bump on every change to this skill (patch for
+fixes/wording, minor for a new non-breaking capability, major for a breaking behavior change) and
+add a `CHANGELOG.md` entry in the same change — never edit the skill without doing both.

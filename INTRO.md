@@ -4,16 +4,18 @@ Display this ASCII art on the first invocation of this skill in a session. Skip 
 invocations within the same session. Print it exactly as-is, then continue to Step 0.
 
 ```
-.-. .-..-.  .-..---.      .--.  .----.  .--.  .----.  .---. .-.   .-..----..-. .-. .---.     .----..----.  .--.  .----.  .---. .-. .-.
-|  `| | \ \/ //  ___}    / {} \ | {}  }/ {} \ | {}  }{_   _}|  `.'  || {_  |  `| |{_   _}   { {__  | {_   / {} \ | {}  }/  ___}| {_} |
-| |\  |  }  { \     }   /  /\  \| .--'/  /\  \| .-. \  | |  | |\ /| || {__ | |\  |  | |     .-._} }| {__ /  /\  \| .-. \\     }| { } |
-`-' `-'  `--'  `---'    `-'  `-'`-'   `-'  `-'`-' `-'  `-'  `-' ` `-'`----'`-' `-'  `-'     `----' `----'`-'  `-'`-' `-' `---' `-' `-'
+ _  ___   _____     _   ___ _____   ___ ___   _   ___  ___ _  _
+| \| \ \ / / __|   /_\ | _ \_   _| / __| __| /_\ | _ \/ __| || |
+| .` |\ V / (__   / _ \|  _/ | |   \__ \ _| / _ \|   / (__| __ |
+|_|\_| |_| \___| /_/ \_\_|   |_|   |___/___/_/ \_\_|_\\___|_||_|
 
   Search and re-check public New York City rental listings, keeping a deduplicated,
   ranked, change-tracked shortlist over time. NYC is the only fixed setting -- area,
   budget, household, and preferences all start unset and get asked about on first
   run, then stay mutable anytime after. Never applies, contacts brokers, or sends
   anything on your behalf.
+
+  Version:  1.0.0  (see CHANGELOG.md)
 
   Storage:  ~/nyc-apartment-search/
 

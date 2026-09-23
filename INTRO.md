@@ -20,7 +20,7 @@ not just how it looks in the source file.
   run, then stay mutable anytime after. Never applies, contacts brokers, or sends
   anything on your behalf.
 
-  Version:  2.1.0  (see CHANGELOG.md)
+  Version:  2.2.0  (see CHANGELOG.md)
 
   Storage:  ~/nyc-apartment-search/
 

@@ -102,15 +102,23 @@ def run_adapters(config: dict, use_cache: bool, only: list[str] | None) -> tuple
     return listings, blocked, raw_count
 
 
-def apply_filters(listings: list[Listing], config: dict) -> tuple[list[Listing], list[tuple[Listing, str]]]:
+def apply_filters(
+    listings: list[Listing], config: dict
+) -> tuple[list[Listing], list[tuple[Listing, str]], dict[str, int]]:
+    """Applies geo, pet, preference, and budget filters in one pass per listing.
+    Returns (kept, rejected, stage_counts) -- stage_counts is the cumulative
+    survivor count after each stage, for an honest funnel breakdown in the terminal
+    summary (each stage's count can only be <= the previous one)."""
     location = config.get("location", {})
     household = config.get("household", {})
     preferences = config.get("preferences", {})
+    max_rent = config.get("apartment", {}).get("max_rent")
     has_dog = bool(household.get("dogs"))
     has_cat = bool(household.get("cats"))
 
     kept: list[Listing] = []
     rejected: list[tuple[Listing, str]] = []
+    stage_counts = {"geo": 0, "pets": 0, "preferences": 0, "budget": 0}
 
     for listing in listings:
         cross_street_number = extract_street_number(listing.address)
@@ -128,21 +136,32 @@ def apply_filters(listings: list[Listing], config: dict) -> tuple[list[Listing],
         if listing.geo_status == "OUT_OF_RANGE":
             rejected.append((listing, "outside configured area"))
             continue
+        stage_counts["geo"] += 1
 
         if has_dog or has_cat:
             accepted = household_pet_accepted(listing.pet_status, listing.dog_allowed, has_dog, has_cat)
             if not accepted:
                 rejected.append((listing, f"pet policy excludes household pet(s): {listing.pet_policy or listing.pet_status}"))
                 continue
+        stage_counts["pets"] += 1
 
         preference_rejections = required_preference_rejections(listing, preferences)
         if preference_rejections:
             rejected.append((listing, "; ".join(preference_rejections)))
             continue
+        stage_counts["preferences"] += 1
+
+        # max_rent is documented (SKILL.md, README) as a hard filter once set -- keep
+        # unknown-rent listings rather than rejecting on missing data, same philosophy
+        # as every other filter here.
+        if max_rent and listing.monthly_rent is not None and listing.monthly_rent > max_rent:
+            rejected.append((listing, f"${listing.monthly_rent:.0f}/mo exceeds configured max rent of ${max_rent:.0f}"))
+            continue
+        stage_counts["budget"] += 1
 
         kept.append(listing)
 
-    return kept, rejected
+    return kept, rejected, stage_counts
 
 
 def enrich(listings: list[Listing], config: dict) -> None:
@@ -161,12 +180,14 @@ def enrich(listings: list[Listing], config: dict) -> None:
             listing.confidence_notes.append("Could not confirm this falls within the configured area")
 
 
-def print_summary(sources_run: int, raw_count: int, after_geo: int, after_pets: int, after_dedupe: int, active_count: int, ranked: list[Listing], blocked: list[tuple[str, str]]) -> None:
+def print_summary(sources_run: int, raw_count: int, stage_counts: dict[str, int], after_dedupe: int, active_count: int, ranked: list[Listing], blocked: list[tuple[str, str]]) -> None:
     console.rule("Run summary")
     console.print(f"Sources searched: {sources_run}")
     console.print(f"Raw listings found: {raw_count}")
-    console.print(f"After geographic filtering: {after_geo}")
-    console.print(f"After pet filtering: {after_pets}")
+    console.print(f"After geographic filtering: {stage_counts['geo']}")
+    console.print(f"After pet filtering: {stage_counts['pets']}")
+    console.print(f"After preference filtering: {stage_counts['preferences']}")
+    console.print(f"After budget filtering: {stage_counts['budget']}")
     console.print(f"After dedupe: {after_dedupe}")
     console.print(f"Active / likely-active: {active_count}")
 
@@ -208,9 +229,8 @@ def main() -> None:
         listing.first_seen = listing.first_seen or now.date()
         listing.last_seen = now.date()
 
-    after_geo, rejected = apply_filters(raw_listings, config)
-    after_pets = len(after_geo)  # pet/preference filtering happens inside apply_filters
-    deduped = deduplicate(after_geo)
+    filtered, rejected, stage_counts = apply_filters(raw_listings, config)
+    deduped = deduplicate(filtered)
     enrich(deduped, config)
 
     ranked = sorted(
@@ -222,8 +242,7 @@ def main() -> None:
     print_summary(
         sources_run=len(ADAPTERS) + len(blocked_results()),
         raw_count=raw_count,
-        after_geo=len(after_geo) + len(rejected),
-        after_pets=after_pets,
+        stage_counts=stage_counts,
         after_dedupe=len(deduped),
         active_count=len(ranked),
         ranked=ranked,

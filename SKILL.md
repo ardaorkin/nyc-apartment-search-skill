@@ -1,7 +1,7 @@
 ---
 name: nyc-apartment-search
-version: 2.1.0
-description: (v2.1.0) Search and re-check public New York City rental listings using a real, ready-to-use codebase this skill deploys (not generates from scratch) — NYC is the one fixed, non-configurable setting; everything else (area within the city, household, bedrooms, budget, move timing, preferences) starts with no default and is asked on first run, written to config.yaml, and mutable anytime after. Maintains a deduplicated, ranked, change-tracked shortlist. Writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
+version: 2.2.0
+description: (v2.2.0) Search and re-check public New York City rental listings using a real, ready-to-use codebase this skill deploys (not generates from scratch) — NYC is the one fixed, non-configurable setting; everything else (area within the city, household, bedrooms, budget, move timing, preferences) starts with no default and is asked on first run, written to config.yaml, and mutable anytime after. Maintains a deduplicated, ranked, change-tracked shortlist. Writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
 user-invocable: true
 ---
 
@@ -161,8 +161,9 @@ Score active / likely-active listings 0–100 using the rubric in
 Every run writes `reports/listings.csv`, `reports/listings.json`, `reports/shortlist.md`, and
 `reports/changes.md` (diffed against the previous snapshot: `NEW`, `PRICE_DROP`, `PRICE_INCREASE`,
 `REMOVED`, `BACK_ON_MARKET`, `DETAIL_CHANGED`, each with previous and current values), then prints
-a terminal summary: sources searched, raw listings, count after geographic filtering, after pet
-filtering, after dedupe, active/likely-active, and the top 10.
+a terminal summary: sources searched, raw listings, and the cumulative survivor count after each
+filter stage in order (geographic, pet, required-preference, budget), then after dedupe,
+active/likely-active, and the top 10.
 
 Report to the user in chat: the top matches, what changed since last run, and — explicitly — which
 sources could not be accessed automatically.

@@ -4,6 +4,28 @@ Semantic versioning: **patch** = bug fixes/wording, **minor** = new capability (
 **major** = breaking behavior change. Bump the version in `SKILL.md`'s frontmatter `version:`
 field and description, and in `INTRO.md`, with every change — add an entry here at the same time.
 
+## 2.2.0 — 2026-09-23
+
+Continued testing after v2.1.0, same loop:
+
+- **Critical bug: `max_rent` was documented (SKILL.md, README, this file) as a hard filter but
+  was never actually enforced as one.** `parsers/scoring.py`'s `_value_score` only gave an
+  over-budget listing a low ranking score (4/20) -- it was never rejected. A user with a firm
+  $3,000 budget could still see a $10,000 listing in their top 10 if it scored well on every
+  other dimension. `apply_filters` (`search.py`) now rejects `monthly_rent > max_rent` when a
+  budget is configured, same "never reject on unknown rent" philosophy as every other filter.
+  Verified live against real listings with a strict budget.
+- **Reporting bug this session's own earlier fixes had made worse:** the terminal summary's
+  "After geographic filtering" / "After pet filtering" counts collapsed to just echoing
+  `raw_count` once preference (v2.1.0) and budget (this release) filtering moved into the same
+  combined per-listing pass -- `after_geo` was literally computed as `len(kept) + len(rejected)`,
+  which is always the raw total regardless of what was actually rejected at that stage.
+  `apply_filters` now returns real cumulative stage counts (geo/pets/preferences/budget); the
+  summary and `SKILL.md`'s Step 5 spec both updated to match, verified live.
+
+9 new/updated tests (56 total), including one asserting the exact stage-by-stage funnel counts
+for a mix of listings each dropped at a different stage.
+
 ## 2.1.0 — 2026-09-23
 
 Found via a real user's own run (Brooklyn, 3BR, $20k budget, wants a doorman) shortly after

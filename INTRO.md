@@ -4,20 +4,23 @@ Display this ASCII art on the first invocation of this skill in a session. Skip 
 invocations within the same session. Print it exactly as-is, then continue to Step 0.
 
 ```
- _   _ ___ ___     _        _     ___                  _
-| | | | __/ __|   /_\  _ __| |_  / __| ___ __ _ _ _ __| |_
-| |_| | _|\__ \  / _ \| '_ \  _| \__ \/ -_) _` | '_/ _| ' \
- \___/|___|___/ /_/ \_\ .__/\__| |___/\___\__,_|_| \__|_||_|
-                      |_|
+ _   ___   ______      _          _     ____                      _
+| \ | \ \ / / ___|    / \   _ __ | |_  / ___|  ___  __ _ _ __ ___| |__
+|  \| |\ V / |       / _ \ | '_ \| __| \___ \ / _ \/ _` | '__/ __| '_ \
+| |\  | | || |___   / ___ \| |_) | |_   ___) |  __/ (_| | | | (__| | | |
+|_| \_| |_| \____| /_/   \_\ .__/ \__| |____/ \___|\__,_|_|  \___|_| |_|
+                           |_|
 
   Search and re-check public NYC rental listings, keeping a deduplicated, ranked,
-  change-tracked shortlist over time. Never applies, contacts brokers, or sends
-  anything on your behalf.
+  change-tracked shortlist over time. Citywide by default -- narrows to a specific
+  neighborhood, borough, or street range only if you ask. Never applies, contacts
+  brokers, or sends anything on your behalf.
 
   Storage:  ~/nyc-apartment-search/
 
   Usage (just ask, no slash command):
-    "search for apartments"          run a search / re-check
+    "search for apartments"          run a search / re-check, citywide by default
+    "just the Upper East Side"       narrow to an area (any neighborhood/borough/range)
     "any price drops?"               what changed since last time
     "set my max rent to $X"          update the budget filter
     "add a source"                   add a brokerage/property manager

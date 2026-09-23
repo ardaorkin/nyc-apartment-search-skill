@@ -42,8 +42,10 @@ correct, expected outcome for most runs, not a failure to fix.
 Sotheby's and local NYC affiliates.
 
 **Property managers / owners** — Glenwood, Rose Associates, Rudin Management, Equity Residential,
-Manhattan Skyline, Related Rentals, UES Management, PREX, plus other reputable Upper East Side
-management companies discovered along the way.
+Manhattan Skyline, Related Rentals, UES Management, PREX. This starter list is Manhattan-heavy —
+it was originally built against an Upper East Side search. Once the user configures a different
+area, add borough-appropriate property managers for that area (checking each one's own
+robots.txt/ToS first, same as any other source) rather than relying on this list alone.
 
 **Known access status** (checked 2026-09-22 against live robots.txt — re-verify periodically,
 sites change these):
@@ -74,8 +76,9 @@ assume it's open because a peer site is.
 
 ## Per-source discovery procedure
 
-1. Locate the current rental-inventory page(s) covering the Upper East Side.
-2. Apply the site's own filters for the neighborhood / E 60th–E 90th where possible.
+1. Locate the current rental-inventory page(s) covering the configured area, or the whole city
+   if none is configured.
+2. Apply the site's own filters for the configured area, if one is set.
 3. Follow through to individual listing pages when the index lacks required fields.
 4. Extract into the shared `Listing` model.
 5. Record the source URL and the listing URL.

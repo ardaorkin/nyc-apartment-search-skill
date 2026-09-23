@@ -48,29 +48,39 @@ class TestNormalizeUnit:
 
 
 class TestClassifyGeo:
+    def test_no_configured_range_is_always_in_range(self):
+        # Citywide default: no area configured means no restriction at all,
+        # regardless of street number or address type.
+        assert classify_geo(45, is_numbered_cross_street=True) == "IN_RANGE"
+        assert classify_geo(9999, is_numbered_cross_street=True) == "IN_RANGE"
+        assert classify_geo(None, is_numbered_cross_street=False) == "IN_RANGE"
+
     def test_in_range_numbered_cross_street(self):
-        assert classify_geo(85, is_numbered_cross_street=True) == "IN_RANGE"
+        assert classify_geo(85, is_numbered_cross_street=True, min_street=60, max_street=90) == "IN_RANGE"
 
     def test_out_of_range_below_min(self):
-        assert classify_geo(45, is_numbered_cross_street=True) == "OUT_OF_RANGE"
+        assert classify_geo(45, is_numbered_cross_street=True, min_street=60, max_street=90) == "OUT_OF_RANGE"
 
     def test_out_of_range_above_max(self):
-        assert classify_geo(95, is_numbered_cross_street=True) == "OUT_OF_RANGE"
+        assert classify_geo(95, is_numbered_cross_street=True, min_street=60, max_street=90) == "OUT_OF_RANGE"
 
     def test_boundary_min_is_in_range(self):
-        assert classify_geo(60, is_numbered_cross_street=True) == "IN_RANGE"
+        assert classify_geo(60, is_numbered_cross_street=True, min_street=60, max_street=90) == "IN_RANGE"
 
     def test_boundary_max_is_in_range(self):
-        assert classify_geo(90, is_numbered_cross_street=True) == "IN_RANGE"
+        assert classify_geo(90, is_numbered_cross_street=True, min_street=60, max_street=90) == "IN_RANGE"
 
     def test_avenue_address_needs_confirmation_not_rejection(self):
         assert (
-            classify_geo(1450, is_numbered_cross_street=False)
+            classify_geo(1450, is_numbered_cross_street=False, min_street=60, max_street=90)
             == "GEOGRAPHY_NEEDS_CONFIRMATION"
         )
 
-    def test_missing_street_number_needs_confirmation(self):
-        assert classify_geo(None, is_numbered_cross_street=True) == "GEOGRAPHY_NEEDS_CONFIRMATION"
+    def test_missing_street_number_needs_confirmation_when_range_configured(self):
+        assert (
+            classify_geo(None, is_numbered_cross_street=True, min_street=60, max_street=90)
+            == "GEOGRAPHY_NEEDS_CONFIRMATION"
+        )
 
     def test_custom_range_bounds(self):
         assert classify_geo(65, is_numbered_cross_street=True, min_street=40, max_street=59) == "OUT_OF_RANGE"

@@ -3,9 +3,12 @@
 A [Claude Code](https://claude.com/claude-code) skill that searches and re-checks public NYC rental
 listings, maintaining a deduplicated, ranked, change-tracked shortlist over time.
 
-Originally built for an Upper East Side 2-bedroom search (2 adults + 1 cat), but the geography,
-household, and preferences are all config-driven — adapt `assets/config.yaml` to any NYC
-neighborhood or household shape.
+**Citywide by default.** It searches all five boroughs until you tell it otherwise — say "just the
+Upper East Side" or "Brooklyn only" or "between E 60th and E 90th" and it narrows from there and
+remembers it. Household and preferences are config-driven too — see `assets/config.yaml`.
+(Originally built for one person's Upper East Side 2-bedroom search, which is why the starter
+brokerage/property-manager source list in `references/sources.md` still leans Manhattan-heavy —
+add borough-appropriate sources once you narrow the area.)
 
 ## What it does
 

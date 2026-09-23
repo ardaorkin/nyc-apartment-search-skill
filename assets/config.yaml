@@ -3,10 +3,13 @@
 # and belongs in .gitignore.
 
 location:
-  borough: Manhattan
-  neighborhood: Upper East Side
-  min_street: 60
-  max_street: 90
+  # Citywide by default. Fill in only if you want to narrow the search -- e.g. borough:
+  # Manhattan, neighborhood: Upper East Side, min_street: 60, max_street: 90. Leave all null
+  # to search all five boroughs with no geographic filter.
+  borough: null
+  neighborhood: null
+  min_street: null
+  max_street: null
 
 household:
   adults: 2
@@ -38,8 +41,7 @@ identity:
   # Used only to draft inquiry messages the user sends by hand. Nothing here is ever transmitted
   # by the tool. Replace with your own details.
   intro: >-
-    My name is [Your Name]. I'm relocating to New York and looking for an apartment on the
-    Upper East Side.
+    My name is [Your Name]. I'm relocating to New York and looking for an apartment.
 
 sources:
   platforms:
@@ -55,6 +57,9 @@ sources:
     - bond_new_york
     - brown_harris_stevens
     - sothebys_nyc
+  # Manhattan-heavy starter list -- this was originally built against an Upper East Side search.
+  # Add borough-appropriate property managers here once you narrow `location` to something
+  # outside Manhattan; check each new source's robots.txt/ToS first, same as any other source.
   managers:
     - glenwood
     - rose_associates

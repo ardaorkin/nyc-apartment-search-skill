@@ -6,7 +6,7 @@ Score only `ACTIVE` and `LIKELY_ACTIVE` listings.
 
 | Dimension | Points |
 | --- | --- |
-| Location fit (within E 60th–E 90th, block quality, transit) | 20 |
+| Location fit (matches the configured area if one is set, otherwise block quality/transit generally) | 20 |
 | Value for rent | 20 |
 | Layout / bedroom utility | 15 |
 | Laundry, dishwasher, practical amenities | 15 |
@@ -22,7 +22,8 @@ professionally managed building.
 
 A single missing preference never disqualifies an otherwise good listing. While `max_rent` is
 `null`, don't let the unknown budget dominate value scoring — score value relative to comparable
-UES units, and always record the top reasons behind a score in `score_reasons`.
+units in the same market (the configured area if one is set, otherwise the borough/neighborhood
+the listing is actually in), and always record the top reasons behind a score in `score_reasons`.
 
 ## Risk checks
 

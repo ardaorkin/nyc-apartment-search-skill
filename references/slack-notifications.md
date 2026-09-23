@@ -26,13 +26,16 @@ before the first send, and get an explicit go-ahead.
 One message per run, bulleted, sorted by rent, only listings that are `ACTIVE` or `LIKELY_ACTIVE`:
 
 ```
-:clipboard: *UES 2BR watchlist* — N tracked under $X · cheapest $Y
+:clipboard: *NYC 2BR watchlist* — N tracked under $X · cheapest $Y
 
-• *$3,760* — <https://example.com/listing|343 E 85th St #3R> · ~Yorkville
-• *$3,800* — <https://example.com/listing|1601 York Ave #3B> · ~Yorkville
+• *$3,760* — <https://example.com/listing|343 E 85th St #3R> · ~Yorkville, Manhattan
+• *$3,800* — <https://example.com/listing|1601 York Ave #3B> · ~Yorkville, Manhattan
 
 _Full list in shortlist.md. Pet policy unconfirmed throughout — ask before viewing._
 ```
+
+Swap the title and `~neighborhood` suffixes for whatever area (or lack of one) the user has
+configured — this is illustrative, not a fixed label.
 
 Use `label`, `url`, `monthly_rent`, and `where` verbatim from the report — never invent, round, or
 re-derive a value, and never add a listing that isn't in `reports/shortlist.md`.

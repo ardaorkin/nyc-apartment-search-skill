@@ -1,13 +1,14 @@
 ---
 name: nyc-apartment-search
-description: Search and re-check public NYC rental listings for an Upper East Side apartment (E 60th–E 90th, 2 adults + 1 cat), maintaining a deduplicated, ranked, change-tracked shortlist. Scaffolds and operates a local Python tool that writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
+description: Search and re-check public NYC rental listings citywide by default, narrowed to a specific neighborhood/borough/street range only if the user asks, maintaining a deduplicated, ranked, change-tracked shortlist. Scaffolds and operates a local Python tool that writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
 user-invocable: true
 ---
 
-# NYC Upper East Side Apartment Search
+# NYC Apartment Search
 
 Operate a local, reusable apartment-search tool: crawl public rental listings, normalize and
 deduplicate them, validate geography, rank them, and report what changed since the last run.
+Citywide by default — see Step 3 for how area scoping works.
 
 Project root: `~/nyc-apartment-search/` (override if the user names a different path).
 
@@ -89,11 +90,23 @@ Useful flags to support: `--sources a,b`, `--no-cache`, `--max-rent N`, `--dry-r
 
 ## Step 3 — Filter: geography and pets
 
-**Geography (hard).** Accept only Upper East Side / Lenox Hill / Yorkville addresses east of
-Central Park between **E 60th and E 90th**. Numbered cross streets: parse the street number
-directly. Avenue addresses: infer cross streets from listing text, map metadata, geocoding, or
-named intersections. Can't confirm? Keep it and flag `GEOGRAPHY_NEEDS_CONFIRMATION`. Clearly
-outside the range → rejected, with the reason recorded.
+**Geography.** Citywide (all five boroughs) is the default — `config.yaml`'s `location.scope` is
+`null` until the user names an area. Don't ask up front; search everything until they narrow it.
+
+If the user names a neighborhood, borough, or street range at any point ("just the Upper East
+Side", "Brooklyn only", "between E 60th and E 90th"), write it to `config.yaml`'s `location`
+block and apply it as a hard filter from then on, same as the budget filter below. Numbered cross
+streets: parse the street number directly against the configured range. Avenue addresses within a
+configured area: infer cross streets from listing text, map metadata, geocoding, or named
+intersections. Can't confirm whether a listing falls inside a *configured* area? Keep it and flag
+`GEOGRAPHY_NEEDS_CONFIRMATION`. Clearly outside a *configured* area → rejected, with the reason
+recorded. With no area configured, every listing is `IN_RANGE` by definition — there's nothing to
+reject on location grounds; still record borough/neighborhood for display and ranking.
+
+Once an area is configured, `references/sources.md`'s brokerage/property-manager list may need
+borough-specific additions — the current list leans Manhattan-heavy since that's what it was
+originally built against. Check each newly relevant source's own robots.txt/ToS before adding it,
+same as any other source.
 
 **Pets (2 adults, 1 cat).** Accept when cats are allowed, pets are allowed, or pets are
 case-by-case with no cat prohibition. Reject only an explicit cat/all-pet ban. Unknown → keep and

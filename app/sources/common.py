@@ -117,6 +117,28 @@ def find_residence_blocks(blocks: list[dict]) -> list[dict]:
     return [b for b in blocks if str(b.get("@type", "")) in types or any(t in types for t in (b.get("@type") or []) if isinstance(b.get("@type"), list))]
 
 
+def merge_residence_blocks(blocks: list[dict]) -> dict:
+    """A single listing page can carry more than one matching JSON-LD block for the
+    same real apartment -- e.g. an `Apartment`/`Residence` block with the clean
+    name/address/description, plus a separate `Product` block that only exists to
+    carry the `Offer` (price). Calling listing_from_jsonld once per block (the old
+    behavior) created two fragmented Listings for one real unit -- often with
+    different address text, so dedupe.py couldn't even merge them back together.
+    Merges into one dict instead: first block's values win, later blocks only fill
+    genuine gaps, so the cleaner descriptive block's name/address wins over a
+    price-only block's noisier one."""
+    if not blocks:
+        return {}
+    merged = dict(blocks[0])
+    for block in blocks[1:]:
+        for key, value in block.items():
+            if value in (None, "", {}, []):
+                continue
+            if merged.get(key) in (None, "", {}, []):
+                merged[key] = value
+    return merged
+
+
 def listing_from_jsonld(block: dict, source: str, url: str, user_agent_neighborhood_hint: str | None = None) -> Listing | None:
     name = block.get("name") or block.get("headline")
     address_block = block.get("address") or {}
@@ -141,7 +163,12 @@ def listing_from_jsonld(block: dict, source: str, url: str, user_agent_neighborh
     floor_plan = block.get("accommodationFloorPlan") or {}
     bedrooms = floor_plan.get("numberOfBedroomsTotal") if isinstance(floor_plan, dict) else None
     if bedrooms is None:
-        bedrooms = block.get("numberOfBedroomsTotal") or block.get("numberOfRooms")
+        bedrooms = block.get("numberOfBedroomsTotal")
+    # Deliberately NOT falling back to numberOfRooms: schema.org's own spec allows
+    # it to mean either bedroom count or total room count depending on the site,
+    # and real Corcoran data confirmed it means the latter here (a $3,875/mo
+    # Bed-Stuy 1BR reported numberOfRooms=4) -- trusting it produced a fabricated,
+    # wrong bedroom count rather than an honest unknown.
     if bedrooms is None:
         bedrooms = guess_bedrooms_from_text(description) if description else guess_bedrooms_from_text(name)
     try:

@@ -1,6 +1,6 @@
 # nyc-apartment-search
 
-**Version 2.0.0** — see [CHANGELOG.md](CHANGELOG.md).
+**Version 2.5.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 A [Claude Code](https://claude.com/claude-code) skill that searches and re-checks public NYC rental
 listings, maintaining a deduplicated, ranked, change-tracked shortlist over time.
@@ -21,12 +21,14 @@ add borough-appropriate sources once you narrow the area.)
 - Deploys a ready-to-use, tested Python tool (from `app/`, copied verbatim — not generated from
   scratch) to `~/nyc-apartment-search/` on first run. See `app/README.md`.
 - Crawls public rental listings — public pages only, respecting robots.txt and site terms, never
-  bypassing access controls. Real coverage comes from **brokerages and property managers**: of the
-  14 checked, 10 are confirmed open (Compass, Corcoran, Douglas Elliman, Brown Harris Stevens,
-  Glenwood, Rose Associates, Equity Residential, Manhattan Skyline, Related Rentals, PREX), 1 is
-  ambiguous pending a URL-structure check (Rudin Management), and 2 are blocked or inconclusive
-  (BOND New York, Sotheby's). The big aggregators (StreetEasy, RentHop, Apartments.com,
-  Realtor.com) forbid scraping in their robots.txt/ToS and will correctly come back
+  bypassing access controls. Real coverage comes from **brokerages and property managers**: as of
+  2026-09-23, 7 of 14 are confirmed open (Corcoran, Douglas Elliman, Glenwood, Rose Associates,
+  Manhattan Skyline, Related Rentals, PREX), 1 is unresolved pending re-verification (Compass), 1
+  is ambiguous pending a URL-structure check (Rudin Management), and 4 are blocked or inconclusive
+  (BOND New York, Sotheby's, Brown Harris Stevens, Equity Residential — see
+  `references/sources.md` for why the last two might be temporary, not permanent). The big
+  aggregators (StreetEasy, RentHop, Apartments.com, Realtor.com) forbid scraping in their
+  robots.txt/ToS and will correctly come back
   `BLOCKED_OR_MANUAL_REVIEW_REQUIRED`; Zillow allows only its search-index pages, not individual
   listings. See `references/sources.md` for the full per-source status — blocked sources are the
   skill correctly respecting ToS, not a bug to route around.

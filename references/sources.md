@@ -47,32 +47,35 @@ it was originally built against an Upper East Side search. Once the user configu
 area, add borough-appropriate property managers for that area (checking each one's own
 robots.txt/ToS first, same as any other source) rather than relying on this list alone.
 
-**Known access status** (checked 2026-09-22 against live robots.txt — re-verify periodically,
-sites change these):
+**Known access status** (last re-verified 2026-09-23 against the live sites — re-verify
+periodically, sites change these; status can also fluctuate for reasons other than a real
+policy change, see the note on BHS/Equity Residential below):
 
 | Source | Status | Basis |
 | --- | --- | --- |
-| Compass | Open | Permissive robots.txt, publishes a for-rent sitemap |
-| Corcoran | Open | Only blocks language variants and legal/static pages |
-| Douglas Elliman | Open | robots.txt explicitly `Allow: /rentals/*` |
-| Brown Harris Stevens | Open | `Disallow:` blank, sitemap published |
-| Glenwood | Open | `Disallow:` blank, sitemap published |
+| Compass | Unresolved as of 2026-09-23 | Sitemap fetch succeeded but yielded no candidate URLs where it previously did (2026-09-22) — re-verify before relying on it |
+| Corcoran | Open | Confirmed open 2026-09-22, but the sitemap URL had moved (old `/sitemap.xml` now 404s) — fixed to the current NYC-rentals sitemap found via robots.txt, re-verified working 2026-09-23 |
+| Douglas Elliman | Open | robots.txt explicitly `Allow: /rentals/*`, re-verified 2026-09-23 |
+| Brown Harris Stevens | `BLOCKED_OR_MANUAL_REVIEW_REQUIRED` as of 2026-09-23 | HTTP 403 on the homepage itself, not just the sitemap — this looks like active bot-defense, not a moved URL. Was confirmed open 2026-09-22. Could be a real policy change, or same-day heavy testing triggering temporary rate-limiting on this specific host — re-verify from a fresh context before treating as final either way. Not attempted to route around regardless of cause. |
+| Glenwood | Open | `Disallow:` blank, sitemap published, re-verified 2026-09-23 |
 | Rose Associates | Open | `Disallow:` blank, sitemap published |
-| Equity Residential | Open | Only blocks roommate/guestcard paths |
-| Manhattan Skyline | Open | `Disallow:` blank |
-| Related Rentals | Open | Only blocks admin/user paths |
+| Equity Residential | `BLOCKED_OR_MANUAL_REVIEW_REQUIRED` as of 2026-09-23 | Same pattern as Brown Harris Stevens above — HTTP 403 on the homepage itself. Same caveat applies. |
+| Manhattan Skyline | Open | `Disallow:` blank, re-verified 2026-09-23 |
+| Related Rentals | Open | Only blocks admin/user paths, re-verified 2026-09-23 |
 | PREX | Open | Permissive, sitemap published |
 | Rudin Management | Ambiguous | `Disallow: /node/*` — may or may not cover listing detail pages depending on their URL structure; confirm against their actual listing URLs before crawling |
 | BOND New York | `BLOCKED_OR_MANUAL_REVIEW_REQUIRED` | Cloudflare WAF challenge blocks even fetching robots.txt, same pattern as RentHop |
 | Sotheby's (sothebysrealty.com) | Inconclusive | Returns an empty HTTP 202 on every attempt — likely edge/bot-protected; needs a manual browser check before treating as open |
 | UES Management | Unresolved | No real site found under a reasonable domain guess — likely a generic placeholder rather than an identifiable company; needs manual research to find what it actually refers to, or drop it from `config.yaml` if it can't be identified |
 
-That's 10 of 14 brokerage/property-manager sources confirmed open — this is where real coverage
-comes from, not the blocked majors above. Don't try to route around the blocked or inconclusive
-ones (no proxy rotation, no headless-browser evasion, no alternate hostnames) — that would violate
-the hard rule above regardless of source type. Record any newly discovered source's status the
-same way, and check each new source's own robots.txt/ToS before adding it to `config.yaml` — don't
-assume it's open because a peer site is.
+As of 2026-09-23 that's 7 of 14 brokerage/property-manager sources confirmed open (down from 10 on
+2026-09-22 — see Brown Harris Stevens and Equity Residential above, which may be temporary), plus
+1 unresolved (Compass) pending re-verification. This is still where real coverage comes from, not
+the blocked majors above. Don't try to route around the blocked or inconclusive ones (no proxy
+rotation, no headless-browser evasion, no alternate hostnames) — that would violate the hard rule
+above regardless of source type or suspected cause. Record any newly discovered source's status
+the same way, and check each new source's own robots.txt/ToS before adding it to `config.yaml` —
+don't assume it's open because a peer site is.
 
 ## Per-source discovery procedure
 

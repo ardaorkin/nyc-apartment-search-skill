@@ -15,6 +15,7 @@ from sources.common import (
     find_residence_blocks,
     listing_from_jsonld,
     looks_like_rental_url,
+    merge_residence_blocks,
     parse_sitemap_urls,
 )
 
@@ -95,10 +96,13 @@ class SitemapAdapter(BaseAdapter):
                 continue
             try:
                 blocks = find_residence_blocks(extract_jsonld_blocks(html))
-                for block in blocks:
-                    listing = listing_from_jsonld(block, self.name, url)
-                    if listing:
-                        listings.append(listing)
+                # One merged listing per page, not one per matching block -- a page
+                # commonly has a descriptive block (Apartment/Residence) plus a
+                # separate Product/Offer block just for price, both describing the
+                # same real unit.
+                listing = listing_from_jsonld(merge_residence_blocks(blocks), self.name, url) if blocks else None
+                if listing:
+                    listings.append(listing)
             except Exception as exc:  # noqa: BLE001
                 errors += 1
                 logger.warning("%s: parse failure on %s: %s (cached at %s)", self.name, url, exc, self._cache_path(url))

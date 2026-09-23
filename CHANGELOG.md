@@ -4,6 +4,41 @@ Semantic versioning: **patch** = bug fixes/wording, **minor** = new capability (
 **major** = breaking behavior change. Bump the version in `SKILL.md`'s frontmatter `version:`
 field and description, and in `INTRO.md`, with every change — add an entry here at the same time.
 
+## 2.5.0 — 2026-09-23
+
+Continued the loop further, checking real per-source health (the user asked "And?" after an
+earlier summary that stopped short):
+
+- **Fixed: Corcoran's sitemap URL had gone stale.** The `/sitemap.xml` this skill was built
+  against now 404s -- Corcoran restructured their sitemaps since 2026-09-22. Found the current
+  location in their own robots.txt (dozens of per-region sitemaps; the NYC-rentals one is
+  already for-rent-only). Verified live with today's real lastmod timestamps.
+- **Fixed a real data-corruption bug, found while verifying the above:** a single listing page
+  commonly carries *two* separate matching JSON-LD blocks -- an `Apartment`/`Residence` block
+  with the descriptive fields, and a separate `Product`/`Offer` block that exists only to carry
+  the price. Calling `listing_from_jsonld` once per block (the old behavior, shared by
+  Compass/Corcoran/Brown Harris Stevens/Equity Residential/Douglas Elliman) created two
+  fragmented Listings per real apartment, with different address text each -- so dedupe.py
+  couldn't even merge them back together. Worse: one real Corcoran page's `Apartment` block
+  reported `numberOfRooms: 4` for a $3,875/mo Bed-Stuy unit that is not a 4BR -- schema.org
+  allows this field to mean either bedroom count or total room count depending on the site, and
+  trusting it fabricated a wrong bedroom count rather than an honest unknown. Fixed both: new
+  `merge_residence_blocks` combines same-page blocks into one dict (first block wins, later
+  blocks only fill genuine gaps) so `listing_from_jsonld` runs once per page, and dropped the
+  `numberOfRooms` fallback entirely. Verified live: Corcoran's raw listing count halved (28 -> 14,
+  one clean listing per real apartment instead of two fragments) with correct bedroom counts and
+  real prices throughout.
+- **Verified, not fixed:** Brown Harris Stevens and Equity Residential now return HTTP 403 on
+  their own homepages (not just their sitemaps), confirmed independently of this skill's code via
+  a direct `curl`. This looks like active bot-defense, not a moved URL like Corcoran's -- and
+  could be a real policy change, or same-day heavy testing triggering temporary rate-limiting on
+  those two specific hosts. Recorded honestly as `BLOCKED_OR_MANUAL_REVIEW_REQUIRED` either way,
+  with the ambiguity noted in `references/sources.md` rather than asserting a cause I can't
+  confirm. Not attempted to route around regardless. Compass similarly stopped returning any
+  sitemap URLs and is recorded as unresolved pending re-verification.
+
+7 new tests (73 total), including dedicated coverage for `merge_residence_blocks`.
+
 ## 2.4.0 — 2026-09-23
 
 Continued the same loop past the filter-enforcement sweep into dedupe correctness, on a real

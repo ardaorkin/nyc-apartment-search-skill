@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 
 from models import Listing, SourceResult, SourceStatus
 from sources.base import BaseAdapter, BlockedError
-from sources.common import extract_jsonld_blocks, find_residence_blocks, listing_from_jsonld
+from sources.common import extract_jsonld_blocks, find_residence_blocks, listing_from_jsonld, merge_residence_blocks
 
 logger = logging.getLogger("nyc_apartment_search")
 
@@ -94,10 +94,15 @@ class DouglasEllimanAdapter(BaseAdapter):
                 continue
             try:
                 blocks = find_residence_blocks(extract_jsonld_blocks(html))
-                for block in blocks:
-                    listing = listing_from_jsonld(block, self.name, url, user_agent_neighborhood_hint=neighborhood_hint)
-                    if listing:
-                        listings.append(listing)
+                # One merged listing per page, not one per matching block -- see
+                # merge_residence_blocks's docstring.
+                listing = (
+                    listing_from_jsonld(merge_residence_blocks(blocks), self.name, url, user_agent_neighborhood_hint=neighborhood_hint)
+                    if blocks
+                    else None
+                )
+                if listing:
+                    listings.append(listing)
             except Exception as exc:  # noqa: BLE001
                 errors += 1
                 logger.warning("%s: parse failure on %s: %s (cached at %s)", self.name, url, exc, self._cache_path(url))

@@ -4,6 +4,36 @@ Semantic versioning: **patch** = bug fixes/wording, **minor** = new capability (
 **major** = breaking behavior change. Bump the version in `SKILL.md`'s frontmatter `version:`
 field and description, and in `INTRO.md`, with every change — add an entry here at the same time.
 
+## 2.6.0 — 2026-09-23
+
+Kept going ("And?", again) -- this time asking why every single listing across this whole
+session's live testing always showed "Likely active, unconfirmed timestamp" and never once
+showed as confidently `ACTIVE`:
+
+- **Found: `source_last_updated` (read by `parsers/freshness.py`'s `classify_freshness` to
+  distinguish `ACTIVE`/`STALE`/`UNCERTAIN`) was never set by any adapter, anywhere.** Every
+  listing from every source always fell through to the same `LIKELY_ACTIVE` catch-all -- not
+  wrong, but strictly less informative than it should be, and it silently made the scoring
+  rubric's freshness dimension (5 vs 3 vs 1 points) never actually differentiate.
+- **Fixed for the shared `SitemapAdapter` path** (Compass, Corcoran, Brown Harris Stevens, Equity
+  Residential -- the bulk of real coverage): sitemap XML already publishes a per-URL `<lastmod>`
+  timestamp that was being discarded entirely by `parse_sitemap_urls`, which only ever extracted
+  `<loc>`. New `parse_sitemap_urls` is a thin wrapper over `parse_sitemap_entries`. Threaded
+  through `SitemapAdapter` (`self._lastmod_by_url`) into `listing_from_jsonld`'s new
+  `source_last_updated` parameter. Verified live: Corcoran listings now genuinely reach
+  `ActiveStatus.ACTIVE` for the first time in this entire session's testing, using real,
+  already-published data -- not fabricated.
+- **Deliberately not extended to Related Rentals'** custom sitemap parsing: its per-URL
+  `<lastmod>` values looked less clearly tied to individual-unit freshness on inspection (more
+  consistent with a Drupal sitemap-generation batch stamp than genuine per-listing modification
+  tracking) -- threading it through without being confident it's trustworthy would risk exactly
+  the kind of fabricated-signal mistake this session has been fixing all day. Left as `null`,
+  honestly, rather than guessed.
+
+5 new tests (78 total): `parse_sitemap_entries` pairing and malformed-XML handling,
+`parse_sitemap_urls`'s backward-compatible contract, and `listing_from_jsonld`'s new parameter
+actually reaching `ActiveStatus.ACTIVE` end-to-end through `classify_freshness`.
+
 ## 2.5.1 — 2026-09-23
 
 Continued the loop again (the user kept asking "And?" after each summary) -- cross-checking the

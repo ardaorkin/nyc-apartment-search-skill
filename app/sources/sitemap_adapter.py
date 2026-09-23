@@ -16,7 +16,7 @@ from sources.common import (
     listing_from_jsonld,
     looks_like_rental_url,
     merge_residence_blocks,
-    parse_sitemap_urls,
+    parse_sitemap_entries,
 )
 
 logger = logging.getLogger("nyc_apartment_search")
@@ -37,14 +37,20 @@ class SitemapAdapter(BaseAdapter):
     require_area_match: bool = True
 
     def _collect_sitemap_urls(self) -> list[str]:
+        """Populates self._lastmod_by_url as a side effect -- a real, already-
+        published freshness signal (see parse_sitemap_entries) that fetch() looks
+        up per target URL and threads into source_last_updated."""
         top_level = list(self.sitemap_urls)
         if self.sitemap_index_url:
             top_level.append(self.sitemap_index_url)
 
+        self._lastmod_by_url: dict[str, str | None] = {}
         listing_urls: list[str] = []
         for sm_url in top_level:
             xml = self.get(sm_url)
-            entries = parse_sitemap_urls(xml)
+            parsed_entries = parse_sitemap_entries(xml)
+            entries = [url for url, _ in parsed_entries]
+            self._lastmod_by_url.update(dict(parsed_entries))
             # If these entries are themselves sitemaps (sitemap index), recurse one level.
             sub_sitemaps = [u for u in entries if u.lower().endswith(".xml")]
             rental_sub = [u for u in sub_sitemaps if looks_like_rental_url(u)]
@@ -55,7 +61,9 @@ class SitemapAdapter(BaseAdapter):
                         sub_xml = self.get(sub)
                     except BlockedError:
                         continue
-                    listing_urls.extend(parse_sitemap_urls(sub_xml))
+                    sub_parsed = parse_sitemap_entries(sub_xml)
+                    self._lastmod_by_url.update(dict(sub_parsed))
+                    listing_urls.extend(url for url, _ in sub_parsed)
             else:
                 listing_urls.extend(entries)
 
@@ -100,7 +108,16 @@ class SitemapAdapter(BaseAdapter):
                 # commonly has a descriptive block (Apartment/Residence) plus a
                 # separate Product/Offer block just for price, both describing the
                 # same real unit.
-                listing = listing_from_jsonld(merge_residence_blocks(blocks), self.name, url) if blocks else None
+                listing = (
+                    listing_from_jsonld(
+                        merge_residence_blocks(blocks),
+                        self.name,
+                        url,
+                        source_last_updated=self._lastmod_by_url.get(url),
+                    )
+                    if blocks
+                    else None
+                )
                 if listing:
                     listings.append(listing)
             except Exception as exc:  # noqa: BLE001

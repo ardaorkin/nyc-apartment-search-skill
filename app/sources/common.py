@@ -16,16 +16,33 @@ from parsers.address import extract_street_number, extract_unit, normalize_addre
 from parsers.pets import classify_pet_policy
 from parsers.rent import parse_rent
 
-def parse_sitemap_urls(xml_text: str) -> list[str]:
-    urls: list[str] = []
+def parse_sitemap_entries(xml_text: str) -> list[tuple[str, str | None]]:
+    """Like parse_sitemap_urls, but also returns each entry's <lastmod> when the
+    sitemap publishes one -- a real, already-published freshness signal (see
+    parsers/freshness.py's classify_freshness) that was previously discarded
+    entirely, leaving every listing unable to reach ActiveStatus.ACTIVE."""
+    entries: list[tuple[str, str | None]] = []
     try:
         root = ET.fromstring(xml_text)
     except ET.ParseError:
-        return urls
-    for elem in root.iter():
-        if elem.tag.endswith("loc") and elem.text:
-            urls.append(elem.text.strip())
-    return urls
+        return entries
+    # <url> (regular sitemap) and <sitemap> (sitemap index) both have the same
+    # <loc>/<lastmod> child shape.
+    for parent in root:
+        loc = None
+        lastmod = None
+        for child in parent:
+            if child.tag.endswith("loc") and child.text:
+                loc = child.text.strip()
+            elif child.tag.endswith("lastmod") and child.text:
+                lastmod = child.text.strip()
+        if loc:
+            entries.append((loc, lastmod))
+    return entries
+
+
+def parse_sitemap_urls(xml_text: str) -> list[str]:
+    return [url for url, _ in parse_sitemap_entries(xml_text)]
 
 
 def filter_urls_by_area(urls: Iterable[str], keywords: list[str]) -> list[str]:
@@ -139,7 +156,13 @@ def merge_residence_blocks(blocks: list[dict]) -> dict:
     return merged
 
 
-def listing_from_jsonld(block: dict, source: str, url: str, user_agent_neighborhood_hint: str | None = None) -> Listing | None:
+def listing_from_jsonld(
+    block: dict,
+    source: str,
+    url: str,
+    user_agent_neighborhood_hint: str | None = None,
+    source_last_updated: str | None = None,
+) -> Listing | None:
     name = block.get("name") or block.get("headline")
     address_block = block.get("address") or {}
     if isinstance(address_block, dict):
@@ -197,6 +220,7 @@ def listing_from_jsonld(block: dict, source: str, url: str, user_agent_neighborh
         cat_allowed=cat_allowed,
         dog_allowed=dog_allowed,
         brokerage_or_management_company=source,
+        source_last_updated=source_last_updated,
         checked_at=datetime.now(timezone.utc),
     )
 

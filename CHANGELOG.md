@@ -4,6 +4,23 @@ Semantic versioning: **patch** = bug fixes/wording, **minor** = new capability (
 **major** = breaking behavior change. Bump the version in `SKILL.md`'s frontmatter `version:`
 field and description, and in `INTRO.md`, with every change — add an entry here at the same time.
 
+## 2.3.0 — 2026-09-23
+
+Same loop, same pattern found a third time -- once for max_rent (2.2.0), now for
+`minimum_bedrooms`:
+
+- **Bug: `minimum_bedrooms` is named as a floor but was only ever consulted by
+  `scoring.py`'s ranking rubric** -- a studio could still appear in results for someone who
+  configured a 3BR minimum, just scored low (2 points). `apply_filters` now rejects a known
+  bedroom count below the configured minimum; unknown bedroom count is still never rejected.
+  Verified live: 34 raw Manhattan Skyline listings dropped to exactly the 2 genuinely-3BR+
+  units under a 3BR-minimum config.
+- Added the new `bedrooms` stage to the terminal summary's funnel breakdown and `SKILL.md`'s
+  Step 5 spec, plus a new Step 3 paragraph distinguishing `minimum_bedrooms` (hard filter) from
+  `preferred_bedrooms` (ranking-only) explicitly, since the two are easy to conflate.
+
+6 new/updated tests (59 total).
+
 ## 2.2.0 — 2026-09-23
 
 Continued testing after v2.1.0, same loop:

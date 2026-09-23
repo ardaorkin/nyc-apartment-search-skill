@@ -105,20 +105,22 @@ def run_adapters(config: dict, use_cache: bool, only: list[str] | None) -> tuple
 def apply_filters(
     listings: list[Listing], config: dict
 ) -> tuple[list[Listing], list[tuple[Listing, str]], dict[str, int]]:
-    """Applies geo, pet, preference, and budget filters in one pass per listing.
-    Returns (kept, rejected, stage_counts) -- stage_counts is the cumulative
-    survivor count after each stage, for an honest funnel breakdown in the terminal
-    summary (each stage's count can only be <= the previous one)."""
+    """Applies geo, pet, preference, budget, and minimum-bedroom filters in one pass
+    per listing. Returns (kept, rejected, stage_counts) -- stage_counts is the
+    cumulative survivor count after each stage, for an honest funnel breakdown in the
+    terminal summary (each stage's count can only be <= the previous one)."""
     location = config.get("location", {})
     household = config.get("household", {})
     preferences = config.get("preferences", {})
-    max_rent = config.get("apartment", {}).get("max_rent")
+    apartment = config.get("apartment", {})
+    max_rent = apartment.get("max_rent")
+    minimum_bedrooms = apartment.get("minimum_bedrooms")
     has_dog = bool(household.get("dogs"))
     has_cat = bool(household.get("cats"))
 
     kept: list[Listing] = []
     rejected: list[tuple[Listing, str]] = []
-    stage_counts = {"geo": 0, "pets": 0, "preferences": 0, "budget": 0}
+    stage_counts = {"geo": 0, "pets": 0, "preferences": 0, "budget": 0, "bedrooms": 0}
 
     for listing in listings:
         cross_street_number = extract_street_number(listing.address)
@@ -159,6 +161,13 @@ def apply_filters(
             continue
         stage_counts["budget"] += 1
 
+        # minimum_bedrooms is named as a floor, not a preference -- keep unknown
+        # bedroom counts rather than rejecting on missing data.
+        if minimum_bedrooms and listing.bedrooms is not None and listing.bedrooms < minimum_bedrooms:
+            rejected.append((listing, f"{listing.bedrooms:g}BR is below the configured minimum of {minimum_bedrooms:g}BR"))
+            continue
+        stage_counts["bedrooms"] += 1
+
         kept.append(listing)
 
     return kept, rejected, stage_counts
@@ -188,6 +197,7 @@ def print_summary(sources_run: int, raw_count: int, stage_counts: dict[str, int]
     console.print(f"After pet filtering: {stage_counts['pets']}")
     console.print(f"After preference filtering: {stage_counts['preferences']}")
     console.print(f"After budget filtering: {stage_counts['budget']}")
+    console.print(f"After minimum-bedroom filtering: {stage_counts['bedrooms']}")
     console.print(f"After dedupe: {after_dedupe}")
     console.print(f"Active / likely-active: {active_count}")
 

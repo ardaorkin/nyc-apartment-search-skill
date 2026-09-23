@@ -80,11 +80,38 @@ def test_no_budget_configured_keeps_expensive_listing():
     assert kept == [listing]
 
 
+def test_below_minimum_bedrooms_rejected_not_just_deprioritized():
+    """Regression: minimum_bedrooms is named as a floor ("minimum"), but like
+    max_rent it was only ever consulted by scoring.py's ranking rubric -- a studio
+    could still show up in results for someone who configured a 3BR minimum."""
+    config = {"location": {}, "household": {}, "preferences": {}, "apartment": {"minimum_bedrooms": 3}}
+    listing = _listing(address="123 Main St", bedrooms=1)
+    kept, rejected, _stage_counts = apply_filters([listing], config)
+    assert kept == []
+    assert len(rejected) == 1
+    assert "minimum" in rejected[0][1]
+
+
+def test_at_or_above_minimum_bedrooms_kept():
+    config = {"location": {}, "household": {}, "preferences": {}, "apartment": {"minimum_bedrooms": 2}}
+    listing = _listing(address="123 Main St", bedrooms=2)
+    kept, rejected, _stage_counts = apply_filters([listing], config)
+    assert kept == [listing]
+
+
+def test_unknown_bedrooms_kept_when_minimum_configured():
+    config = {"location": {}, "household": {}, "preferences": {}, "apartment": {"minimum_bedrooms": 2}}
+    listing = _listing(address="123 Main St", bedrooms=None)
+    kept, rejected, _stage_counts = apply_filters([listing], config)
+    assert kept == [listing]
+
+
 def test_stage_counts_reflect_where_each_listing_actually_dropped():
     """Regression: the terminal summary used to report `after_geo` as
     `len(kept) + len(rejected)` -- always equal to raw_count, regardless of what was
-    actually rejected at the geo stage, once pet/preference/budget filtering moved
-    into the same combined pass. Each stage's count must reflect real survivors.
+    actually rejected at the geo stage, once pet/preference/budget/bedroom filtering
+    moved into the same combined pass. Each stage's count must reflect real
+    survivors.
 
     Borough alone can't produce OUT_OF_RANGE here (listing_borough is always None --
     see the comment in apply_filters), so this uses a neighborhood mismatch instead,
@@ -93,20 +120,22 @@ def test_stage_counts_reflect_where_each_listing_actually_dropped():
         "location": {"neighborhood": "Chelsea"},
         "household": {"dogs": 1},
         "preferences": {"doorman": "required"},
-        "apartment": {"max_rent": 3000},
+        "apartment": {"max_rent": 3000, "minimum_bedrooms": 2},
     }
     out_of_range = _listing(neighborhood="Astoria")
     pet_rejected = _listing(neighborhood="Chelsea", pet_status="PROHIBITED")
     pref_rejected = _listing(neighborhood="Chelsea", doorman=False)
     over_budget = _listing(neighborhood="Chelsea", monthly_rent=5000)
-    survivor = _listing(neighborhood="Chelsea", monthly_rent=2000, doorman=True)
+    too_small = _listing(neighborhood="Chelsea", monthly_rent=2000, doorman=True, bedrooms=1)
+    survivor = _listing(neighborhood="Chelsea", monthly_rent=2000, doorman=True, bedrooms=2)
 
     kept, rejected, stage_counts = apply_filters(
-        [out_of_range, pet_rejected, pref_rejected, over_budget, survivor], config
+        [out_of_range, pet_rejected, pref_rejected, over_budget, too_small, survivor], config
     )
 
     assert kept == [survivor]
-    assert stage_counts["geo"] == 4  # everyone except out_of_range
-    assert stage_counts["pets"] == 3  # geo survivors minus pet_rejected
-    assert stage_counts["preferences"] == 2  # pet survivors minus pref_rejected
-    assert stage_counts["budget"] == 1  # preference survivors minus over_budget
+    assert stage_counts["geo"] == 5  # everyone except out_of_range
+    assert stage_counts["pets"] == 4  # geo survivors minus pet_rejected
+    assert stage_counts["preferences"] == 3  # pet survivors minus pref_rejected
+    assert stage_counts["budget"] == 2  # preference survivors minus over_budget
+    assert stage_counts["bedrooms"] == 1  # budget survivors minus too_small

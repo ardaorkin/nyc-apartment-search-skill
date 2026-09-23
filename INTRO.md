@@ -1,7 +1,10 @@
 # Intro
 
 Display this ASCII art on the first invocation of this skill in a session. Skip on subsequent
-invocations within the same session. Print it exactly as-is, then continue to Step 0.
+invocations within the same session. Output the fenced code block below **verbatim, including
+the triple-backtick markers** — outside a code fence, a markdown renderer treats the art's
+backslashes as escape characters and underscores as italics markers, silently eating exactly
+those characters. Then continue to Step 0.
 
 ```
  _  ___   _____     _   ___ _____   ___ ___   _   ___  ___ _  _
@@ -15,7 +18,7 @@ invocations within the same session. Print it exactly as-is, then continue to St
   run, then stay mutable anytime after. Never applies, contacts brokers, or sends
   anything on your behalf.
 
-  Version:  1.0.0  (see CHANGELOG.md)
+  Version:  1.0.1  (see CHANGELOG.md)
 
   Storage:  ~/nyc-apartment-search/
 

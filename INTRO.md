@@ -11,15 +11,16 @@ invocations within the same session. Print it exactly as-is, then continue to St
 |_| \_| |_| \____| /_/   \_\ .__/ \__| |____/ \___|\__,_|_|  \___|_| |_|
                            |_|
 
-  Search and re-check public NYC rental listings, keeping a deduplicated, ranked,
-  change-tracked shortlist over time. Citywide by default -- narrows to a specific
-  neighborhood, borough, or street range only if you ask. Never applies, contacts
-  brokers, or sends anything on your behalf.
+  Search and re-check public New York City rental listings, keeping a deduplicated,
+  ranked, change-tracked shortlist over time. NYC is the only fixed setting -- area,
+  budget, household, and preferences all start unset and get asked about on first
+  run, then stay mutable anytime after. Never applies, contacts brokers, or sends
+  anything on your behalf.
 
   Storage:  ~/nyc-apartment-search/
 
   Usage (just ask, no slash command):
-    "search for apartments"          run a search / re-check, citywide by default
+    "search for apartments"          first run asks area/budget/household/etc.
     "just the Upper East Side"       narrow to an area (any neighborhood/borough/range)
     "any price drops?"               what changed since last time
     "set my max rent to $X"          update the budget filter

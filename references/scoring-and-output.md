@@ -15,10 +15,12 @@ Score only `ACTIVE` and `LIKELY_ACTIVE` listings.
 | Building quality / elevator / professional management | 5 |
 | Listing freshness and confidence | 5 |
 
-Preference order when comparing otherwise-similar units: 2-bedroom > unusually spacious or
-compelling 1-bedroom; in-unit washer/dryer; dishwasher; elevator if above the 3rd floor; good
-natural light; sane layout; no-fee or direct-management; clearly stated rent stabilization;
-professionally managed building.
+Preference order when comparing otherwise-similar units, using whatever's configured in
+`apartment`/`preferences` (all `null` — no preference — until first-time setup or an update sets
+them): `preferred_bedrooms` > unusually spacious or compelling alternative if bedroom count is
+unset or close; then whichever of in-unit washer/dryer, dishwasher, elevator-above-floor, no-fee,
+rent-stabilized are configured as `required` or `preferred`; then good natural light and a sane
+layout as generic tie-breakers when nothing else distinguishes two listings.
 
 A single missing preference never disqualifies an otherwise good listing. While `max_rent` is
 `null`, don't let the unknown budget dominate value scoring — score value relative to comparable

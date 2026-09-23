@@ -3,9 +3,13 @@
 A [Claude Code](https://claude.com/claude-code) skill that searches and re-checks public NYC rental
 listings, maintaining a deduplicated, ranked, change-tracked shortlist over time.
 
-**Citywide by default.** It searches all five boroughs until you tell it otherwise — say "just the
-Upper East Side" or "Brooklyn only" or "between E 60th and E 90th" and it narrows from there and
-remembers it. Household and preferences are config-driven too — see `assets/config.yaml`.
+**New York City is the only fixed setting.** Everything else — area within the city, household,
+bedrooms, budget, move timing, preferences — starts unset and is asked about on first run (see
+`FIRST-TIME-SETUP.md`), written to `config.yaml`, and mutable anytime after: say "just the Upper
+East Side," "Brooklyn only," "between E 60th and E 90th," "actually widen it back to all
+boroughs," "set my max rent to $4,000" — whatever, whenever. Skipping a question at setup just
+means "no preference," not a guess.
+
 (Originally built for one person's Upper East Side 2-bedroom search, which is why the starter
 brokerage/property-manager source list in `references/sources.md` still leans Manhattan-heavy —
 add borough-appropriate sources once you narrow the area.)
@@ -46,6 +50,8 @@ add borough-appropriate sources once you narrow the area.)
   by the scaffolded project and never published anywhere.
 - **Scheduling and Slack notifications are opt-in, every time.** A past yes doesn't carry forward
   to a new conversation.
+- **New York City is fixed, not configurable.** Every other criterion is asked about and can be
+  changed; the city cannot.
 
 ## Install
 
@@ -99,7 +105,9 @@ run, never a channel).
 
 ```
 SKILL.md                            # the skill definition Claude Code reads
-assets/config.yaml                   # starter config — copy and fill in your own details
+INTRO.md                             # first-run banner
+FIRST-TIME-SETUP.md                  # config creation wizard (read when config.yaml is missing)
+assets/config.yaml                   # starter config — everything but `city` starts null
 references/data-model.md             # required listing fields and status enums
 references/sources.md                # source list, discovery procedure, access rules
 references/scoring-and-output.md     # ranking rubric, risk checks, report formats

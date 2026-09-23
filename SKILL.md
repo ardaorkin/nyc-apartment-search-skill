@@ -1,6 +1,6 @@
 ---
 name: nyc-apartment-search
-description: Search and re-check public NYC rental listings citywide by default, narrowed to a specific neighborhood/borough/street range only if the user asks, maintaining a deduplicated, ranked, change-tracked shortlist. Scaffolds and operates a local Python tool that writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
+description: Search and re-check public New York City rental listings — NYC is the one fixed, non-configurable setting; everything else (area within the city, household, bedrooms, budget, move timing, preferences) starts with no default and is asked on first run, written to config.yaml, and mutable anytime after. Maintains a deduplicated, ranked, change-tracked shortlist. Scaffolds and operates a local Python tool that writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
 user-invocable: true
 ---
 
@@ -8,7 +8,12 @@ user-invocable: true
 
 Operate a local, reusable apartment-search tool: crawl public rental listings, normalize and
 deduplicate them, validate geography, rank them, and report what changed since the last run.
-Citywide by default — see Step 3 for how area scoping works.
+
+New York City is fixed — this skill doesn't search anywhere else, and that's not a setting.
+Every other search criterion (area within NYC, household, bedrooms, budget, move timing,
+preferences) starts unset and is asked about during first-time setup (Step 1) — see
+[FIRST-TIME-SETUP.md](FIRST-TIME-SETUP.md). All of it is mutable afterward; nothing here is a
+one-time choice.
 
 Project root: `~/nyc-apartment-search/` (override if the user names a different path).
 
@@ -38,6 +43,9 @@ each platform. This is expected, correct behavior, not a broken source.
 - **Scheduling and Slack notifications are opt-in, every time.** Never install a cron/launchd job
   or send a Slack message unless the user explicitly says yes *in this conversation* — a past yes
   doesn't carry forward, and neither does inferring consent from context. See Step 7.
+- **New York City is fixed, not configurable.** Every other criterion is asked about and can be
+  changed; the city cannot. A request to search a different city is a different tool, not a
+  setting to change on this one — say so rather than trying to accommodate it.
 
 ## Step 0 — First-run intro
 
@@ -51,7 +59,7 @@ Check for `~/nyc-apartment-search/`. If absent, create it:
 
 ```
 nyc-apartment-search/
-  config.yaml          # copy from this skill's assets/config.yaml, then fill in identity
+  config.yaml          # created via FIRST-TIME-SETUP.md on first run -- see below
   search.py            # CLI entry point
   sources/             # one adapter per site
   parsers/             # extraction + normalization helpers
@@ -62,6 +70,10 @@ nyc-apartment-search/
   README.md            # how to run, how to add a source, how to schedule
   .gitignore           # config.yaml, data/, cache/, reports/
 ```
+
+Check for `~/nyc-apartment-search/config.yaml`. If missing, read
+[FIRST-TIME-SETUP.md](FIRST-TIME-SETUP.md) and follow it to create it by asking the user — don't
+silently write defaults. If present, use it as-is.
 
 Python, stdlib-first plus `httpx`, `beautifulsoup4`, `lxml`, `pydantic`, `pandas`, `rapidfuzz`,
 `tenacity`, `rich`; `playwright` only where a public page genuinely requires it.
@@ -90,13 +102,14 @@ Useful flags to support: `--sources a,b`, `--no-cache`, `--max-rent N`, `--dry-r
 
 ## Step 3 — Filter: geography and pets
 
-**Geography.** Citywide (all five boroughs) is the default — `config.yaml`'s `location.scope` is
-`null` until the user names an area. Don't ask up front; search everything until they narrow it.
-
-If the user names a neighborhood, borough, or street range at any point ("just the Upper East
-Side", "Brooklyn only", "between E 60th and E 90th"), write it to `config.yaml`'s `location`
-block and apply it as a hard filter from then on, same as the budget filter below. Numbered cross
-streets: parse the street number directly against the configured range. Avenue addresses within a
+**Geography.** New York City is fixed (see Hard rules); the area within it is asked about during
+first-time setup, not assumed. `config.yaml`'s `location` block (`borough`, `neighborhood`,
+`min_street`, `max_street`) is `null` — citywide, no filter — unless the user named an area during
+setup or since. Whenever the user names or changes an area ("just the Upper East Side", "Brooklyn
+only", "between E 60th and E 90th", "actually widen it back to all boroughs"), update
+`config.yaml`'s `location` block and apply it as a hard filter from then on, same as the budget
+filter below — this is mutable at any time, not a one-time setup answer. Numbered cross streets:
+parse the street number directly against the configured range. Avenue addresses within a
 configured area: infer cross streets from listing text, map metadata, geocoding, or named
 intersections. Can't confirm whether a listing falls inside a *configured* area? Keep it and flag
 `GEOGRAPHY_NEEDS_CONFIRMATION`. Clearly outside a *configured* area → rejected, with the reason
@@ -108,11 +121,14 @@ borough-specific additions — the current list leans Manhattan-heavy since that
 originally built against. Check each newly relevant source's own robots.txt/ToS before adding it,
 same as any other source.
 
-**Pets (2 adults, 1 cat).** Accept when cats are allowed, pets are allowed, or pets are
-case-by-case with no cat prohibition. Reject only an explicit cat/all-pet ban. Unknown → keep and
-flag `PET_POLICY_NEEDS_CONFIRMATION` (matches the `pet_status` enum in `references/data-model.md`
-— use the underscored form consistently). Extract pet deposit, pet fee, monthly pet rent, approval
-requirements, and any other restriction.
+**Pets.** `config.yaml`'s `household` block (`adults`, `cats`, `dogs`) is `null` until set during
+first-time setup or since. With no pets configured, don't filter on pet policy at all — just
+record it. Once pets are configured: accept when cats/dogs are allowed, pets are allowed, or pets
+are case-by-case with no ban on the configured pet type. Reject only an explicit ban covering the
+configured pet(s). Unknown → keep and flag `PET_POLICY_NEEDS_CONFIRMATION` (matches the
+`pet_status` enum in `references/data-model.md` — use the underscored form consistently). Extract
+pet deposit, pet fee, monthly pet rent, approval requirements, and any other restriction
+regardless of whether pets are configured — useful information either way.
 
 **Budget.** `max_rent` is `null` until the user gives one — collect everything otherwise suitable
 and make rent a prominent, sortable field. When the user supplies a budget, write it to
@@ -156,9 +172,11 @@ broker fee, total upfront cost, lease terms, application requirements, gross vs.
 rent, rent stabilization, mandatory building/amenity fees).
 
 Draft short, friendly, professional WhatsApp/SMS-style inquiries using the `identity.intro` line
-from `config.yaml`. Mention the cat only when the pet policy needs confirming or the listing asks.
-Never invent salary, credit score, savings, SSN, guarantor, rental history, lease length, or an
-exact move-in date, and leave immigration details out entirely. **Show the draft; never send it.**
+from `config.yaml`. If `identity.intro` is `null`, ask for one before drafting rather than
+inventing an intro. Mention pets only when the pet policy needs confirming, the listing asks, or
+pets are configured in `household`. Never invent salary, credit score, savings, SSN, guarantor,
+rental history, lease length, or an exact move-in date, and leave immigration details out
+entirely. **Show the draft; never send it.**
 
 ## Step 7 — Scheduling and Slack notifications (ask first, every time)
 
@@ -182,6 +200,7 @@ to bury the uninstall step somewhere the user has to go looking for it.
 ## References
 
 - `INTRO.md` — first-run banner (Step 0)
+- `FIRST-TIME-SETUP.md` — config creation wizard (read only when `config.yaml` is missing)
 - `references/data-model.md` — required listing fields and status enums
 - `references/sources.md` — source list, discovery procedure, access rules
 - `references/scoring-and-output.md` — ranking rubric, risk checks, report formats

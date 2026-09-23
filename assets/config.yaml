@@ -1,35 +1,47 @@
 # Starter config for nyc-apartment-search.
-# Copy to ~/nyc-apartment-search/config.yaml. Keep it local — it holds personal details
-# and belongs in .gitignore.
+# Copy to ~/nyc-apartment-search/config.yaml during first-time setup (see FIRST-TIME-SETUP.md)
+# and fill in only what the user actually answered -- leave the rest null. Keep it local -- it
+# holds personal details and belongs in .gitignore.
+
+# Fixed. This skill only ever searches New York City -- not user-editable, not asked about, and
+# not something to change even if asked. A request to search a different city is out of scope
+# for this skill, not a config change.
+city: New York City
 
 location:
-  # Citywide by default. Fill in only if you want to narrow the search -- e.g. borough:
-  # Manhattan, neighborhood: Upper East Side, min_street: 60, max_street: 90. Leave all null
-  # to search all five boroughs with no geographic filter.
+  # No default -- asked during first-time setup. Citywide (all five boroughs, no geographic
+  # filter) if the user said "no preference" or skipped. Narrow later at any time: borough,
+  # neighborhood, min_street, max_street.
   borough: null
   neighborhood: null
   min_street: null
   max_street: null
 
 household:
-  adults: 2
-  cats: 1
+  # No default -- asked during first-time setup.
+  adults: null
+  cats: null
+  dogs: null
 
 apartment:
-  preferred_bedrooms: 2
-  minimum_bedrooms: 1
-  max_rent: null          # hard filter once set; leave null to collect everything
+  # No default -- asked during first-time setup.
+  preferred_bedrooms: null
+  minimum_bedrooms: null
+  max_rent: null
 
 move:
-  target_date: null      # set your own target move-in date
-  flexible: true
+  # No default -- asked during first-time setup.
+  target_date: null
+  flexible: null
 
 preferences:
-  in_unit_laundry: preferred
-  dishwasher: preferred
-  elevator_above_floor: 3
-  no_fee: preferred
-  rent_stabilized: bonus
+  # No default -- asked during first-time setup. null means no preference; otherwise "required"
+  # (hard filter) or "preferred" (ranking boost, not a filter).
+  in_unit_laundry: null
+  dishwasher: null
+  elevator_above_floor: null
+  no_fee: null
+  rent_stabilized: null
 
 search:
   request_delay_seconds: 3
@@ -38,10 +50,9 @@ search:
   user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36"
 
 identity:
-  # Used only to draft inquiry messages the user sends by hand. Nothing here is ever transmitted
-  # by the tool. Replace with your own details.
-  intro: >-
-    My name is [Your Name]. I'm relocating to New York and looking for an apartment.
+  # No default -- asked during first-time setup. Used only to draft inquiry messages the user
+  # sends by hand. Nothing here is ever transmitted by the tool.
+  intro: null
 
 sources:
   platforms:

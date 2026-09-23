@@ -1,6 +1,6 @@
 # nyc-apartment-search
 
-**Version 1.0.0** — see [CHANGELOG.md](CHANGELOG.md).
+**Version 2.0.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 A [Claude Code](https://claude.com/claude-code) skill that searches and re-checks public NYC rental
 listings, maintaining a deduplicated, ranked, change-tracked shortlist over time.
@@ -18,7 +18,8 @@ add borough-appropriate sources once you narrow the area.)
 
 ## What it does
 
-- Scaffolds a local Python tool under `~/nyc-apartment-search/` on first run.
+- Deploys a ready-to-use, tested Python tool (from `app/`, copied verbatim — not generated from
+  scratch) to `~/nyc-apartment-search/` on first run. See `app/README.md`.
 - Crawls public rental listings — public pages only, respecting robots.txt and site terms, never
   bypassing access controls. Real coverage comes from **brokerages and property managers**: of the
   14 checked, 10 are confirmed open (Compass, Corcoran, Douglas Elliman, Brown Harris Stevens,
@@ -63,9 +64,9 @@ Copy this directory into your Claude Code skills folder:
 git clone https://github.com/ardaorkin/nyc-apartment-search-skill.git ~/.claude/skills/nyc-apartment-search
 ```
 
-Then, in Claude Code, just ask it to search for apartments — the skill scaffolds the local project
-on first use and walks you through setting your neighborhood, budget, and preferences via
-`assets/config.yaml`.
+Then, in Claude Code, just ask it to search for apartments — the skill copies the ready-made
+`app/` codebase to `~/nyc-apartment-search/` on first use and walks you through setting your
+neighborhood, budget, and preferences (written to `config.yaml`, not part of the repo).
 
 ## Usage
 
@@ -93,9 +94,10 @@ run, never a channel).
 
 ## Tests
 
-- **Deterministic** (`tests/test_deterministic.py`): pure-function unit tests for address
-  normalization, geo filtering, pet-policy classification, dedup keys, and rent parsing — no
-  network, no LLM. Run with `pip install pytest && pytest tests/test_deterministic.py`.
+- **App** (`app/tests/`): pytest suite for the real, shipped implementation — address
+  normalization, geo filtering (including the citywide-default and configured-area cases),
+  dedup, pet-policy, rent parsing, and adapter failure resilience. Run with
+  `pip install -r app/requirements.txt pytest && cd app && pytest tests/`.
 - **Agentic** (`tests/agentic/`): scenario-based checks that Claude actually follows the skill's
   hard rules — respects a robots.txt block instead of routing around it, never fabricates an
   unknown field, never sends a drafted message, never leaks immigration status, and asks before
@@ -110,13 +112,16 @@ SKILL.md                            # the skill definition Claude Code reads
 INTRO.md                             # first-run banner
 FIRST-TIME-SETUP.md                  # config creation wizard (read when config.yaml is missing)
 assets/config.yaml                   # starter config — everything but `city` starts null
-references/data-model.md             # required listing fields and status enums
-references/sources.md                # source list, discovery procedure, access rules
-references/scoring-and-output.md     # ranking rubric, risk checks, report formats
+references/data-model.md             # spec: required listing fields and status enums
+references/sources.md                # spec: source list, discovery procedure, access rules
+references/scoring-and-output.md     # spec: ranking rubric, risk checks, report formats
 references/scheduling.md             # cron/launchd setup and teardown (opt-in)
 references/slack-notifications.md    # Slack digest setup and teardown (opt-in)
-lib/nyc_apartment_search/            # reference implementation of the pure-logic pieces
-tests/test_deterministic.py          # deterministic unit tests
+app/                                 # the ready-to-use codebase -- copied verbatim, see app/README.md
+  models.py, search.py, reports.py, requirements.txt
+  parsers/                           # address, dedupe, pets, rent, freshness, risk, scoring
+  sources/                           # one adapter per site
+  tests/                             # pytest suite for the above
 tests/agentic/                       # agentic guardrail eval scenarios + runner
 ```
 

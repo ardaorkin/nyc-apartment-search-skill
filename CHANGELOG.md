@@ -4,6 +4,32 @@ Semantic versioning: **patch** = bug fixes/wording, **minor** = new capability (
 **major** = breaking behavior change. Bump the version in `SKILL.md`'s frontmatter `version:`
 field and description, and in `INTRO.md`, with every change — add an entry here at the same time.
 
+## 2.0.0 — 2026-09-23
+
+**Breaking change to how this skill operates.** Previously, Step 1 told Claude to write the
+entire codebase from scratch on every first run — slow, and prone to re-introducing bugs a
+previous run had already found and fixed. This skill now ships a real, working, tested
+implementation in `app/` (models, CLI, parsers, one adapter per source, reports, pytest suite)
+that Step 1 copies verbatim instead of generating.
+
+The shipped code came from a real debugging session that ran it against the actual sites. Before
+shipping it, found and fixed a real bug in that session's adapters: `sources/common.py`, the
+Compass/Corcoran/Brown Harris Stevens/Equity Residential adapters, and especially
+`sources/douglas_elliman.py` (hardcoded to fetch exactly two neighborhood search pages) and
+`sources/related_rentals.py` (hardcoded to a "nearest neighborhoods" heuristic) all hardcoded the
+specific neighborhood that debugging session happened to be testing with. Shipped as-is, every
+other user's search would have silently kept searching that neighborhood regardless of their own
+`config.yaml`. Fixed by deriving area filtering from `config.yaml`'s `location` block at fetch
+time everywhere (`sources/common.py`'s new `area_keywords_from_config`), verified against the
+live sites both citywide (no area configured) and with a different configured neighborhood
+(Chelsea) to confirm the fix generalizes rather than just moving the hardcoding somewhere else.
+
+Also retired `lib/nyc_apartment_search/` and `tests/test_deterministic.py` (the earlier minimal
+reference implementation used only to demonstrate the deterministic-test pattern before a real
+app existed) — `app/tests/` now covers the same ground against the real implementation, more
+thoroughly. `tests/agentic/` (guardrail evals) and all `references/*.md` (now documentation of
+what `app/` actually does, not build instructions) are unchanged in role.
+
 ## 1.0.2 — 2026-09-23
 
 - The 1.0.1 fix wasn't sufficient: the banner still came out mangled (whole lines missing, not

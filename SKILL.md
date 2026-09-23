@@ -1,7 +1,7 @@
 ---
 name: nyc-apartment-search
-version: 1.0.2
-description: (v1.0.2) Search and re-check public New York City rental listings — NYC is the one fixed, non-configurable setting; everything else (area within the city, household, bedrooms, budget, move timing, preferences) starts with no default and is asked on first run, written to config.yaml, and mutable anytime after. Maintains a deduplicated, ranked, change-tracked shortlist. Scaffolds and operates a local Python tool that writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
+version: 2.0.0
+description: (v2.0.0) Search and re-check public New York City rental listings using a real, ready-to-use codebase this skill deploys (not generates from scratch) — NYC is the one fixed, non-configurable setting; everything else (area within the city, household, bedrooms, budget, move timing, preferences) starts with no default and is asked on first run, written to config.yaml, and mutable anytime after. Maintains a deduplicated, ranked, change-tracked shortlist. Writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
 user-invocable: true
 ---
 
@@ -56,44 +56,43 @@ markers** — don't strip the fence, and don't swap in fancier art than what's a
 INTRO.md for why: dense special-character art has repeatedly failed to reproduce correctly in
 practice). Then continue below. Skip on subsequent invocations within the same session.
 
-## Step 1 — Scaffold if the project doesn't exist
+## Step 1 — Deploy the ready-made codebase if the project doesn't exist
 
-Check for `~/nyc-apartment-search/`. If absent, create it:
+Check for `~/nyc-apartment-search/`. If absent, create it by **copying this skill's `app/`
+directory verbatim** — `models.py`, `search.py`, `reports.py`, `requirements.txt`, `parsers/`,
+`sources/`, `tests/`, `.gitignore`, `README.md`. Don't write any of this from scratch: it's a
+real, working, tested implementation, built and debugged against the actual sites (robots.txt/ToS
+compliance already applied, actual JSON-LD/API shapes handled, per-source access status recorded
+in `references/sources.md`). Regenerating it from the spec below would be strictly worse — slower,
+untested, and prone to reintroducing bugs the real thing has already had fixed.
 
 ```
 nyc-apartment-search/
-  config.yaml          # created via FIRST-TIME-SETUP.md on first run -- see below
-  search.py            # CLI entry point
-  sources/             # one adapter per site
-  parsers/             # extraction + normalization helpers
-  data/                # snapshots (one per run) + canonical listing store
-  reports/             # listings.csv, listings.json, shortlist.md, changes.md
-  cache/               # raw fetched responses, keyed by URL + date
-  tests/
-  README.md            # how to run, how to add a source, how to schedule
-  .gitignore           # config.yaml, data/, cache/, reports/
+  config.yaml          # created via FIRST-TIME-SETUP.md on first run -- not part of app/
+  <everything else copied verbatim from this skill's app/ directory>
 ```
+
+Then `cd ~/nyc-apartment-search && python3 -m venv .venv && source .venv/bin/activate && pip
+install -r requirements.txt`.
 
 Check for `~/nyc-apartment-search/config.yaml`. If missing, read
 [FIRST-TIME-SETUP.md](FIRST-TIME-SETUP.md) and follow it to create it by asking the user — don't
 silently write defaults. If present, use it as-is.
 
-Python, stdlib-first plus `httpx`, `beautifulsoup4`, `lxml`, `pydantic`, `pandas`, `rapidfuzz`,
-`tenacity`, `rich`; `playwright` only where a public page genuinely requires it.
+`app/README.md` documents the codebase; read it before touching any copied file. Only edit the
+copied code if something's actually broken or you're adding a new source/capability — and if you
+do, the one rule that matters most: **never hardcode an area** (neighborhood, borough, specific
+URL) into an adapter. Derive it from `config.yaml`'s `location` block at fetch time instead (see
+`sources/common.py`'s `area_keywords_from_config`, or `sources/douglas_elliman.py` /
+`sources/related_rentals.py` for adapters that build their own request URLs from it) — a
+hardcoded area silently breaks results for every user whose configured area differs from whatever
+it was built against, and that exact bug has already happened once. Run `pytest tests/` after any
+change; extend the suite when you add a source or change parsing logic, don't just remove
+coverage.
 
-Build in this order, and get each piece working before the next:
-
-1. Shared `Listing` model (`references/data-model.md`) with strict `null` handling.
-2. Address normalization + geographic filter (Step 3).
-3. Deduplication (Step 4).
-4. Source adapters, easiest reputable source first (`references/sources.md`).
-5. Ranking, reports, change tracking.
-
-Every parser: robust selectors, graceful degradation on layout changes, logged parse failures,
-raw response retained in `cache/`. **One failing source never aborts the run.**
-
-Unit tests are required for address normalization, street-range filtering, pet-policy
-classification, deduplication, and rent parsing.
+`references/data-model.md`, `references/sources.md`, and `references/scoring-and-output.md`
+describe what the shipped code in `app/` already does — read them as the spec the implementation
+follows (useful for debugging or extending it), not as instructions to build something new.
 
 ## Step 2 — Run
 
@@ -202,6 +201,7 @@ to bury the uninstall step somewhere the user has to go looking for it.
 
 ## References
 
+- `app/` — the ready-to-use codebase; copy verbatim in Step 1 (see `app/README.md`)
 - `CHANGELOG.md` — version history
 - `INTRO.md` — first-run banner (Step 0)
 - `FIRST-TIME-SETUP.md` — config creation wizard (read only when `config.yaml` is missing)

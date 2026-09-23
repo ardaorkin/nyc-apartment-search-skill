@@ -1,7 +1,7 @@
 ---
 name: nyc-apartment-search
-version: 1.0.1
-description: (v1.0.1) Search and re-check public New York City rental listings — NYC is the one fixed, non-configurable setting; everything else (area within the city, household, bedrooms, budget, move timing, preferences) starts with no default and is asked on first run, written to config.yaml, and mutable anytime after. Maintains a deduplicated, ranked, change-tracked shortlist. Scaffolds and operates a local Python tool that writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
+version: 1.0.2
+description: (v1.0.2) Search and re-check public New York City rental listings — NYC is the one fixed, non-configurable setting; everything else (area within the city, household, bedrooms, budget, move timing, preferences) starts with no default and is asked on first run, written to config.yaml, and mutable anytime after. Maintains a deduplicated, ranked, change-tracked shortlist. Scaffolds and operates a local Python tool that writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
 user-invocable: true
 ---
 
@@ -52,10 +52,9 @@ each platform. This is expected, correct behavior, not a broken source.
 
 If this is the first invocation of this skill in the current session, read
 [INTRO.md](INTRO.md) and output its fenced code block **verbatim, including the triple-backtick
-markers** — don't strip the fence and don't re-render the art as plain text. Outside a code
-fence, a markdown renderer treats the art's backslashes as escape characters and underscores as
-italics markers, silently eating exactly those characters. Then continue below. Skip on
-subsequent invocations within the same session.
+markers** — don't strip the fence, and don't swap in fancier art than what's actually there (see
+INTRO.md for why: dense special-character art has repeatedly failed to reproduce correctly in
+practice). Then continue below. Skip on subsequent invocations within the same session.
 
 ## Step 1 — Scaffold if the project doesn't exist
 

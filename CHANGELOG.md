@@ -4,6 +4,15 @@ Semantic versioning: **patch** = bug fixes/wording, **minor** = new capability (
 **major** = breaking behavior change. Bump the version in `SKILL.md`'s frontmatter `version:`
 field and description, and in `INTRO.md`, with every change — add an entry here at the same time.
 
+## 1.0.2 — 2026-09-23
+
+- The 1.0.1 fix wasn't sufficient: the banner still came out mangled (whole lines missing, not
+  just individual escaped characters), reported after another real run. The actual root cause
+  is broader than markdown escaping — dense, special-character-heavy art isn't reliably
+  reproduced by a model's text generation at all, code-fence or not; "output it verbatim" doesn't
+  guarantee character-exact output. Replaced the figlet-style art with a plain bordered banner
+  (`+`/`-`/`|` and plain text only) specifically because it has nothing dense enough to garble.
+
 ## 1.0.1 — 2026-09-22
 
 - Fixed the intro banner getting silently corrupted outside a code fence: a markdown renderer

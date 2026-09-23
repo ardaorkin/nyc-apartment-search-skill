@@ -1,16 +1,18 @@
 # Intro
 
-Display this ASCII art on the first invocation of this skill in a session. Skip on subsequent
+Display this banner on the first invocation of this skill in a session. Skip on subsequent
 invocations within the same session. Output the fenced code block below **verbatim, including
-the triple-backtick markers** — outside a code fence, a markdown renderer treats the art's
-backslashes as escape characters and underscores as italics markers, silently eating exactly
-those characters. Then continue to Step 0.
+the triple-backtick markers**. Deliberately plain: earlier, denser figlet-style art (lots of
+`\` and `_`, tight monospace alignment) got garbled in practice — not just by markdown escaping
+`\`/`_`, but because reproducing dense character art exactly isn't reliable in the first place.
+This banner uses only `+`, `-`, `|`, and plain text specifically so there's nothing dense enough
+to garble. Don't replace it with fancier art later without confirming it survives an actual run,
+not just how it looks in the source file.
 
 ```
- _  ___   _____     _   ___ _____   ___ ___   _   ___  ___ _  _
-| \| \ \ / / __|   /_\ | _ \_   _| / __| __| /_\ | _ \/ __| || |
-| .` |\ V / (__   / _ \|  _/ | |   \__ \ _| / _ \|   / (__| __ |
-|_|\_| |_| \___| /_/ \_\_|   |_|   |___/___/_/ \_\_|_\\___|_||_|
++--------------------------------------------------------------+
+|                     NYC APARTMENT SEARCH                     |
++--------------------------------------------------------------+
 
   Search and re-check public New York City rental listings, keeping a deduplicated,
   ranked, change-tracked shortlist over time. NYC is the only fixed setting -- area,
@@ -18,7 +20,7 @@ those characters. Then continue to Step 0.
   run, then stay mutable anytime after. Never applies, contacts brokers, or sends
   anything on your behalf.
 
-  Version:  1.0.1  (see CHANGELOG.md)
+  Version:  1.0.2  (see CHANGELOG.md)
 
   Storage:  ~/nyc-apartment-search/
 

@@ -1,0 +1,33 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  deterministic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pytest
+      - run: pytest tests/test_deterministic.py -v
+
+  agentic:
+    # Exercises real Claude behavior via the `claude` CLI against the skill's hard rules.
+    # Needs network + API credentials this repo doesn't have configured, so it's informational
+    # only (continue-on-error) rather than a required check. Run it locally with an authenticated
+    # `claude` CLI for real signal: python3 tests/agentic/run_evals.py
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for claude CLI
+        run: |
+          if ! command -v claude >/dev/null; then
+            echo "claude CLI not available in this runner — skipping agentic evals (informational job)."
+            exit 0
+          fi
+          python3 tests/agentic/run_evals.py

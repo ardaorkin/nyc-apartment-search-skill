@@ -26,17 +26,23 @@ neighborhood or household shape.
 - Writes `reports/listings.csv`, `listings.json`, `shortlist.md`, and a `changes.md` diff
   (`NEW`, `PRICE_DROP`, `PRICE_INCREASE`, `REMOVED`, `BACK_ON_MARKET`, ...) against the previous run.
 - On request, drafts (never sends) short inquiry messages to listing contacts.
+- On explicit, per-conversation opt-in only: installs a recurring schedule and/or sends a Slack
+  digest to your own account after each run. Off by default — see "Scheduling and notifications"
+  below.
 
 ## Hard rules
 
-- **Read-only toward the outside world.** Never applies, contacts brokers, sends messages, makes
-  payments, or uploads documents. Any inquiry message is drafted for you to send by hand.
+- **Read-only toward anyone but you.** Never applies, contacts brokers, sends messages to a
+  listing contact, makes payments, or uploads documents. Any inquiry message is drafted for you to
+  send by hand.
 - **Public pages only.** No CAPTCHA solving, no auth bypass, no anti-bot evasion, no proxy
   rotation, no account-only content. Blocked sources are reported, not silently skipped.
 - **Never fabricates a field.** Unknown data is `null` plus a note — never a guess, and never a
   Zestimate or cached snippet standing in for the current asking rent.
 - **Personal details stay local.** `config.yaml`, `data/`, `cache/`, and `reports/` are git-ignored
   by the scaffolded project and never published anywhere.
+- **Scheduling and Slack notifications are opt-in, every time.** A past yes doesn't carry forward
+  to a new conversation.
 
 ## Install
 
@@ -62,19 +68,43 @@ Once installed, trigger phrases include:
 - "set my max rent"
 - "draft a message for this listing"
 
-## Scheduling (optional)
+## Scheduling and notifications (opt-in, off by default)
 
-Manual by default. On request, the skill can hand you a `cron` or `launchd` entry (every 3–6 hours
-is a reasonable cadence during an active search) — it won't install one for you.
+Manual by default — nothing runs unless you run it. If you ask for a recurring schedule and/or a
+Slack digest after each run, the skill asks for explicit confirmation *in that conversation*
+before installing or sending anything, shows you exactly what it's about to install/send, and
+gives you the exact command to undo it in the same message. Neither carries over silently to a
+future conversation — you're asked again each time.
+
+Details: `references/scheduling.md` (cron/launchd install + uninstall) and
+`references/slack-notifications.md` (Slack digest format + limits — self-DM only, one message per
+run, never a channel).
+
+## Tests
+
+- **Deterministic** (`tests/test_deterministic.py`): pure-function unit tests for address
+  normalization, geo filtering, pet-policy classification, dedup keys, and rent parsing — no
+  network, no LLM. Run with `pip install pytest && pytest tests/test_deterministic.py`.
+- **Agentic** (`tests/agentic/`): scenario-based checks that Claude actually follows the skill's
+  hard rules — respects a robots.txt block instead of routing around it, never fabricates an
+  unknown field, never sends a drafted message, never leaks immigration status, and asks before
+  installing a schedule or sending a Slack message. Requires the `claude` CLI; run with
+  `python3 tests/agentic/run_evals.py`. Unlike the deterministic suite, these can flake on LLM
+  phrasing variance — re-run a lone failure before treating it as a real regression.
 
 ## Structure
 
 ```
-SKILL.md                       # the skill definition Claude Code reads
-assets/config.yaml              # starter config — copy and fill in your own details
-references/data-model.md        # required listing fields and status enums
-references/sources.md           # source list, discovery procedure, access rules
-references/scoring-and-output.md  # ranking rubric, risk checks, report formats
+SKILL.md                            # the skill definition Claude Code reads
+assets/config.yaml                   # starter config — copy and fill in your own details
+references/data-model.md             # required listing fields and status enums
+references/sources.md                # source list, discovery procedure, access rules
+references/scoring-and-output.md     # ranking rubric, risk checks, report formats
+references/scheduling.md             # cron/launchd setup and teardown (opt-in)
+references/slack-notifications.md    # Slack digest setup and teardown (opt-in)
+lib/nyc_apartment_search/            # reference implementation of the pure-logic pieces
+tests/test_deterministic.py          # deterministic unit tests
+tests/agentic/                       # agentic guardrail eval scenarios + runner
 ```
 
 ## License

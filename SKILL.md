@@ -1,6 +1,6 @@
 ---
 name: nyc-apartment-search
-description: Search and re-check public NYC rental listings for an Upper East Side apartment (E 60th–E 90th, 2 adults + 1 cat), maintaining a deduplicated, ranked, change-tracked shortlist. Scaffolds and operates a local Python tool that writes CSV, JSON, a Markdown shortlist, and a change report. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", or to draft inquiry messages for a listing. Never applies, contacts brokers, or sends anything.
+description: Search and re-check public NYC rental listings for an Upper East Side apartment (E 60th–E 90th, 2 adults + 1 cat), maintaining a deduplicated, ranked, change-tracked shortlist. Scaffolds and operates a local Python tool that writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
 user-invocable: true
 ---
 
@@ -20,9 +20,10 @@ each platform. This is expected, correct behavior, not a broken source.
 
 ## Hard rules — never violate
 
-- **Read-only toward the outside world.** Never submit an application, contact a broker, send a
-  message or email, make a payment, or upload personal documents. Inquiry messages are *drafted
-  for the user to send by hand* — never sent.
+- **Read-only toward anyone but the user.** Never submit an application, contact a broker, send a
+  message or email to a listing contact, make a payment, or upload personal documents. Inquiry
+  messages to brokers/landlords are *drafted for the user to send by hand* — never sent. This does
+  not cover notifying the user themselves — see Step 7.
 - **Public pages only.** Respect robots.txt and site terms, rate-limit, cache, and prefer
   APIs / JSON-LD / structured data / sitemaps over HTML scraping and browser automation.
 - **Never defeat access controls** — no CAPTCHA solving, no auth bypass, no anti-bot evasion, no
@@ -30,8 +31,12 @@ each platform. This is expected, correct behavior, not a broken source.
   `BLOCKED_OR_MANUAL_REVIEW_REQUIRED` and the run continues.
 - **Never fabricate a field.** Unknown is `null` plus a note in `confidence_notes`. A Zestimate,
   rent estimate, historical price, or cached search snippet is never the current asking rent.
-- Personal details stay local. Don't commit `config.yaml`, `data/`, or `cache/`, and don't publish
-  reports anywhere outside this machine.
+- Personal details stay local. Don't commit `config.yaml`, `data/`, or `cache/` to git, and don't
+  publish reports publicly. A Slack digest sent to the user's own account (Step 7) is not
+  "publishing" — it's still just the user, on a channel they explicitly opted into.
+- **Scheduling and Slack notifications are opt-in, every time.** Never install a cron/launchd job
+  or send a Slack message unless the user explicitly says yes *in this conversation* — a past yes
+  doesn't carry forward, and neither does inferring consent from context. See Step 7.
 
 ## Step 1 — Scaffold if the project doesn't exist
 
@@ -86,7 +91,8 @@ outside the range → rejected, with the reason recorded.
 
 **Pets (2 adults, 1 cat).** Accept when cats are allowed, pets are allowed, or pets are
 case-by-case with no cat prohibition. Reject only an explicit cat/all-pet ban. Unknown → keep and
-flag `PET POLICY NEEDS CONFIRMATION`. Extract pet deposit, pet fee, monthly pet rent, approval
+flag `PET_POLICY_NEEDS_CONFIRMATION` (matches the `pet_status` enum in `references/data-model.md`
+— use the underscored form consistently). Extract pet deposit, pet fee, monthly pet rent, approval
 requirements, and any other restriction.
 
 **Budget.** `max_rent` is `null` until the user gives one — collect everything otherwise suitable
@@ -135,14 +141,30 @@ from `config.yaml`. Mention the cat only when the pet policy needs confirming or
 Never invent salary, credit score, savings, SSN, guarantor, rental history, lease length, or an
 exact move-in date, and leave immigration details out entirely. **Show the draft; never send it.**
 
-## Scheduling
+## Step 7 — Scheduling and Slack notifications (ask first, every time)
 
-Manual by default. On request only, provide (don't install) a `cron` or `launchd` entry —
-every 3–6 hours is sensible during an active search, and the cadence stays configurable.
+Both are opt-in. Never set either up because a run went well, because the user set it up before,
+or because it seems convenient — always ask, in this conversation, before touching either.
+
+**Scheduling.** After a successful manual run, ask: *"Want this running on a recurring schedule
+instead of manually?"* If no (or no answer), stop — manual (`python search.py`) stays the only way
+it runs. If yes, read `references/scheduling.md` and follow it exactly. Unlike before, this now
+means actually installing the job, not just handing over text — but show the user the exact
+plist/crontab content and the exact uninstall command *before* installing it, in the same message.
+
+**Slack notifications.** Ask separately: *"Want a Slack message after each run with what
+changed?"* — a yes to scheduling is not a yes to this. If no, reports stay local files only. If
+yes, read `references/slack-notifications.md` and follow it exactly.
+
+Both reference files include how to undo what they set up. Mention that explicitly when you set
+either one up, not just when asked — the easiest way to end up with a forgotten background job is
+to bury the uninstall step somewhere the user has to go looking for it.
 
 ## References
 
 - `references/data-model.md` — required listing fields and status enums
 - `references/sources.md` — source list, discovery procedure, access rules
 - `references/scoring-and-output.md` — ranking rubric, risk checks, report formats
+- `references/scheduling.md` — cron/launchd setup and teardown (read only after the user opts in)
+- `references/slack-notifications.md` — Slack digest setup and teardown (read only after the user opts in)
 - `assets/config.yaml` — starter configuration

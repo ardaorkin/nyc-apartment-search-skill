@@ -11,12 +11,15 @@ neighborhood or household shape.
 
 - Scaffolds a local Python tool under `~/nyc-apartment-search/` on first run.
 - Crawls public rental listings — public pages only, respecting robots.txt and site terms, never
-  bypassing access controls. In practice that means real coverage comes mostly from **brokerages
-  and property managers**, whose own inventory pages are usually open. The big aggregators
-  (StreetEasy, RentHop, Apartments.com, Realtor.com) forbid scraping in their robots.txt/ToS and
-  will correctly come back `BLOCKED_OR_MANUAL_REVIEW_REQUIRED`; Zillow allows only its search-index
-  pages, not individual listings. See `references/sources.md` for the current per-platform status
-  — that's expected, ToS-respecting behavior, not a broken source.
+  bypassing access controls. Real coverage comes from **brokerages and property managers**: of the
+  14 checked, 10 are confirmed open (Compass, Corcoran, Douglas Elliman, Brown Harris Stevens,
+  Glenwood, Rose Associates, Equity Residential, Manhattan Skyline, Related Rentals, PREX), 1 is
+  ambiguous pending a URL-structure check (Rudin Management), and 2 are blocked or inconclusive
+  (BOND New York, Sotheby's). The big aggregators (StreetEasy, RentHop, Apartments.com,
+  Realtor.com) forbid scraping in their robots.txt/ToS and will correctly come back
+  `BLOCKED_OR_MANUAL_REVIEW_REQUIRED`; Zillow allows only its search-index pages, not individual
+  listings. See `references/sources.md` for the full per-source status — blocked sources are the
+  skill correctly respecting ToS, not a bug to route around.
 - Normalizes, deduplicates, and geographically filters listings.
 - Classifies pet policy, freshness (`ACTIVE` / `STALE` / `OFF_MARKET` / etc.), and scam risk.
 - Ranks active listings 0–100 against a configurable rubric.

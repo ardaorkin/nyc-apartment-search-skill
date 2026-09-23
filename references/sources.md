@@ -39,17 +39,38 @@ alternate hostnames) — that would violate the hard rule above. Record each as
 correct, expected outcome for most runs, not a failure to fix.
 
 **Brokerages** — Compass, Corcoran, Douglas Elliman, BOND New York, Brown Harris Stevens,
-Sotheby's and local NYC affiliates. These are the primary real source of coverage: most publish
-their own rental inventory on pages robots.txt leaves open.
+Sotheby's and local NYC affiliates.
 
 **Property managers / owners** — Glenwood, Rose Associates, Rudin Management, Equity Residential,
 Manhattan Skyline, Related Rentals, UES Management, PREX, plus other reputable Upper East Side
-management companies discovered along the way. Same story — usually open, and often the freshest
-listing data since it comes straight from the landlord.
+management companies discovered along the way.
 
-Publicly accessible individual broker and management-company inventory pages count too. Record any
-newly discovered reputable source in `config.yaml` so later runs pick it up. Check each new
-source's own robots.txt/ToS before adding it — don't assume it's open because a peer site is.
+**Known access status** (checked 2026-09-22 against live robots.txt — re-verify periodically,
+sites change these):
+
+| Source | Status | Basis |
+| --- | --- | --- |
+| Compass | Open | Permissive robots.txt, publishes a for-rent sitemap |
+| Corcoran | Open | Only blocks language variants and legal/static pages |
+| Douglas Elliman | Open | robots.txt explicitly `Allow: /rentals/*` |
+| Brown Harris Stevens | Open | `Disallow:` blank, sitemap published |
+| Glenwood | Open | `Disallow:` blank, sitemap published |
+| Rose Associates | Open | `Disallow:` blank, sitemap published |
+| Equity Residential | Open | Only blocks roommate/guestcard paths |
+| Manhattan Skyline | Open | `Disallow:` blank |
+| Related Rentals | Open | Only blocks admin/user paths |
+| PREX | Open | Permissive, sitemap published |
+| Rudin Management | Ambiguous | `Disallow: /node/*` — may or may not cover listing detail pages depending on their URL structure; confirm against their actual listing URLs before crawling |
+| BOND New York | `BLOCKED_OR_MANUAL_REVIEW_REQUIRED` | Cloudflare WAF challenge blocks even fetching robots.txt, same pattern as RentHop |
+| Sotheby's (sothebysrealty.com) | Inconclusive | Returns an empty HTTP 202 on every attempt — likely edge/bot-protected; needs a manual browser check before treating as open |
+| UES Management | Unresolved | No real site found under a reasonable domain guess — likely a generic placeholder rather than an identifiable company; needs manual research to find what it actually refers to, or drop it from `config.yaml` if it can't be identified |
+
+That's 10 of 14 brokerage/property-manager sources confirmed open — this is where real coverage
+comes from, not the blocked majors above. Don't try to route around the blocked or inconclusive
+ones (no proxy rotation, no headless-browser evasion, no alternate hostnames) — that would violate
+the hard rule above regardless of source type. Record any newly discovered source's status the
+same way, and check each new source's own robots.txt/ToS before adding it to `config.yaml` — don't
+assume it's open because a peer site is.
 
 ## Per-source discovery procedure
 

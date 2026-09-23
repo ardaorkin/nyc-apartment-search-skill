@@ -1,7 +1,7 @@
 ---
 name: nyc-apartment-search
-version: 2.5.0
-description: (v2.5.0) Search and re-check public New York City rental listings using a real, ready-to-use codebase this skill deploys (not generates from scratch) — NYC is the one fixed, non-configurable setting; everything else (area within the city, household, bedrooms, budget, move timing, preferences) starts with no default and is asked on first run, written to config.yaml, and mutable anytime after. Maintains a deduplicated, ranked, change-tracked shortlist. Writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
+version: 2.5.1
+description: (v2.5.1) Search and re-check public New York City rental listings using a real, ready-to-use codebase this skill deploys (not generates from scratch) — NYC is the one fixed, non-configurable setting; everything else (area within the city, household, bedrooms, budget, move timing, preferences) starts with no default and is asked on first run, written to config.yaml, and mutable anytime after. Maintains a deduplicated, ranked, change-tracked shortlist. Writes CSV, JSON, a Markdown shortlist, and a change report. Can optionally, only on explicit opt-in, install a recurring schedule and send Slack digests to the user. Use when asked to "search for apartments", "check for new listings", "run the apartment search", "any price drops", "add a source", "set my max rent", "search in <neighborhood/borough>", "schedule the search", "notify me on Slack", or to draft inquiry messages for a listing. Never contacts brokers or applies on the user's behalf.
 user-invocable: true
 ---
 
@@ -93,6 +93,32 @@ coverage.
 `references/data-model.md`, `references/sources.md`, and `references/scoring-and-output.md`
 describe what the shipped code in `app/` already does — read them as the spec the implementation
 follows (useful for debugging or extending it), not as instructions to build something new.
+
+### Adding a source
+
+`config.yaml`'s `sources:` block is a human-readable status list only — `search.py`'s `ADAPTERS`
+is a hardcoded Python list, and nothing in `app/` ever reads `config['sources']`. Adding a name to
+`brokerages`/`managers`/`discovered` does not make the skill search it; you have to write real
+code. When the user says "add a source" (or names a specific site):
+
+1. Check its robots.txt/ToS first, same as any other source — never build an adapter for
+   something the site's own terms forbid. Record the finding in `references/sources.md`'s status
+   table either way (open or blocked) before writing anything else.
+2. If it's structurally similar to the existing `SitemapAdapter`-based sources (Compass, Corcoran,
+   Brown Harris Stevens, Equity Residential) — a sitemap plus JSON-LD listing pages — subclass
+   `SitemapAdapter` in a new `sources/<name>.py`; that's usually just `name`, `base_url`,
+   `sitemap_urls`, and `require_area_match`, no custom parsing needed.
+3. Otherwise, write a full custom adapter (see `sources/glenwood.py`, `sources/related_rentals.py`,
+   or `sources/manhattan_skyline.py` for three different real examples — plain-text parsing, and
+   a public JSON API). Follow `sources/base.py`'s contract: never raise to the caller, cache via
+   `self.get()`, record `BLOCKED_OR_MANUAL_REVIEW_REQUIRED`/`ERROR` rather than crashing.
+4. Set a real `unit` field if at all possible (even a proxy derived from the listing URL, like
+   Glenwood's `?lid=N` or Related Rentals' trailing numeric ID) — without one, `dedupe.py`
+   silently merges distinct apartments in the same building into one, discarding real inventory.
+5. Register the new class in `search.py`'s `ADAPTERS` list and import it.
+6. Add tests to `app/tests/` and run `pytest tests/` — extend coverage, don't just add code.
+7. Update `references/sources.md`'s status table and `assets/config.yaml`'s relevant list (for
+   human tracking — remember this doesn't wire it up by itself, step 5 does that).
 
 ## Step 2 — Run
 

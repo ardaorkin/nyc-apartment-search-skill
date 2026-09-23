@@ -61,6 +61,10 @@ identity:
   intro: null
 
 sources:
+  # This whole block is a human-readable status list -- app/search.py's ADAPTERS is a
+  # hardcoded Python list and never reads config.yaml, so editing anything here (including
+  # `discovered`) has NO effect on what actually gets searched. To really add a source, write
+  # a new adapter file; see SKILL.md Step 1's "Adding a source" section.
   platforms:
     - streeteasy
     - zillow
@@ -86,7 +90,8 @@ sources:
     - related_rentals
     - ues_management
     - prex
-  # Append reputable sources discovered during a run.
+  # Manual notes only -- a name here does NOT get searched (see the block comment
+  # above). Track reputable sources worth building an adapter for later.
   discovered: []
 
 output:

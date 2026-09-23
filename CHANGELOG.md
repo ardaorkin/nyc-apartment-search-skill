@@ -4,6 +4,27 @@ Semantic versioning: **patch** = bug fixes/wording, **minor** = new capability (
 **major** = breaking behavior change. Bump the version in `SKILL.md`'s frontmatter `version:`
 field and description, and in `INTRO.md`, with every change — add an entry here at the same time.
 
+## 2.5.1 — 2026-09-23
+
+Continued the loop again (the user kept asking "And?" after each summary) -- cross-checking the
+adapter registry, the blocked-sources list, and `config.yaml`'s `sources:` block against each
+other for consistency:
+
+- **Fixed a real documentation gap: `config.yaml`'s entire `sources:` block (`platforms`,
+  `brokerages`, `managers`, `discovered`) is never read by `app/search.py` at all.** `ADAPTERS`
+  is a hardcoded Python list; editing `config.yaml` to "add a source" has zero effect on what
+  actually gets searched. This matters because "add a source" is one of this skill's own listed
+  trigger phrases, but nothing in `SKILL.md` explained the real procedure -- a future session
+  asked to add a source could easily believe editing `discovered: []` was sufficient. Fixed by
+  being honest in `config.yaml`'s own comments (it's a human-tracking list only) and adding a
+  real "Adding a source" procedure to `SKILL.md` Step 1: check robots.txt/ToS first, write an
+  adapter file (subclass `SitemapAdapter` or write a custom one), set a real `unit` field, wire
+  it into `ADAPTERS`, add tests, update `references/sources.md`.
+- No code behavior changed -- documentation/process only, so this is a patch release. Adapter
+  registry (`ADAPTERS`), the blocked-sources dict, and every name in `config.yaml`'s `sources:`
+  lists were all cross-checked against each other and found consistent (no orphaned or
+  double-counted source names).
+
 ## 2.5.0 — 2026-09-23
 
 Continued the loop further, checking real per-source health (the user asked "And?" after an

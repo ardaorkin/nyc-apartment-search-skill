@@ -9,7 +9,9 @@ just leaves that field `null` ("no preference" / "no restriction"), never a gues
 
 ## Steps
 
-1. Ask the user, one at a time or together (whichever reads more naturally):
+1. Ask the user one question at a time, always — never batch these into a single message, even
+   though every one of them is individually optional. Wait for a reply (or "skip") before asking
+   the next one:
    - **Area** — optional. "Which part of NYC — a neighborhood, a borough, or a street range?
      Or say 'all boroughs' / 'no preference' for a citywide search." Blank or "no preference" →
      all location fields stay `null` (citywide, no geographic filter).

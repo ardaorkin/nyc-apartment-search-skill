@@ -77,11 +77,20 @@ class GlenwoodAdapter(BaseAdapter):
         pet_status, cat_allowed, dog_allowed = classify_pet_policy(description)
         doorman = "doorman" in text.lower()
 
+        # The page exposes no human-readable apartment number, but each unit has its
+        # own /listing-detail/?lid=N page -- without this, dedupe.py's _similar()
+        # treats "both units unknown" as compatible and silently merges two
+        # different apartments in the same building into one listing, discarding
+        # the other's data entirely.
+        lid_match = re.search(r"lid=(\d+)", url)
+        unit = f"LID{lid_match.group(1)}" if lid_match else None
+
         return Listing(
             source=self.name,
             listing_url=url,
             source_urls=[url],
             address=normalize_address(building.strip()),
+            unit=unit,
             neighborhood=neighborhood,
             bedrooms=float(beds),
             bathrooms=float(baths),

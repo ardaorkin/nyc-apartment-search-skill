@@ -4,6 +4,37 @@ Semantic versioning: **patch** = bug fixes/wording, **minor** = new capability (
 **major** = breaking behavior change. Bump the version in `SKILL.md`'s frontmatter `version:`
 field and description, and in `INTRO.md`, with every change — add an entry here at the same time.
 
+## 2.4.0 — 2026-09-23
+
+Continued the same loop past the filter-enforcement sweep into dedupe correctness, on a real
+non-dry-run search across multiple adapters together:
+
+- **Bug: two genuinely different apartments in the same building silently merged into one
+  listing, discarding one entirely.** `glenwood.py` and `related_rentals.py` never set a
+  `unit` field on the listings they build. `parsers/dedupe.py`'s `_similar()` only rejects a
+  match when *both* listings have a unit *and* they differ -- with both unset, two different
+  1BRs in the same building (matching address + bedroom count + reasonably similar marketing
+  copy) satisfied every remaining check and got merged, keeping only one's price/details.
+  Fixed by deriving a stable per-listing identifier from each adapter's own detail-page URL
+  (Glenwood's `?lid=N`, Related Rentals' trailing numeric ID) -- exactly the kind of
+  "structured data over guesswork" the adapter contract already calls for elsewhere. Verified
+  live: "The Bamford" and "The Barclay" (each genuinely two distinct units) now correctly
+  appear as two rows instead of one.
+- **Separate bug found while verifying the above:** `related_rentals.py` was silently dropping
+  every listing whose page now reads "no longer available" instead of the real bed/bath/price
+  block -- a `return None` that violated this skill's own explicit rule ("never silently
+  discard a stale listing -- classify it"). Fixed to construct a proper `Listing` with
+  `ActiveStatus.OFF_MARKET` (via the description marker `classify_freshness` already reads)
+  instead of vanishing. In building this fix, found and fixed a third, adjacent bug: the
+  off-market page's own header text isn't `"<Building> | <Address>"` like the live page,
+  it's `"<Neighborhood> <Bed/Bath summary> | <Address>"` -- so reusing the live-page
+  regex capture for "building name" produced garbage ("Bath 500 West 30th Street...").
+  Fixed by reading the building name from the URL's own path segment instead (same
+  pattern already used for neighborhood), verified live both before and after.
+
+7 new tests (66 total): dedicated coverage for the two new URL-parsing helpers
+(`_bedrooms_from_url`, `_building_from_url`).
+
 ## 2.3.0 — 2026-09-23
 
 Same loop, same pattern found a third time -- once for max_rent (2.2.0), now for

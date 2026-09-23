@@ -47,6 +47,23 @@ _DETAIL_RE = re.compile(
     r"Price:\s*\$?\s*([\d,]+)\s*Available:\s*([\w /]+?)(?:\s*DOWNLOAD|\s*VIEW|\s*$)",
     re.IGNORECASE,
 )
+# The sitemap lists unit pages that are no longer offered -- the site keeps the page
+# up with this exact message instead of a 404. bed/bath/price/availability are gone
+# from the page, so _DETAIL_RE can't match, but that's a real off-market signal, not
+# a parse failure -- see the off-market branch in _parse_unit_page.
+_OFF_MARKET_MARKER = "no longer available"
+
+
+def _bedrooms_from_url(url: str) -> float | None:
+    """bed count is also encoded in the unit URL's own slug (e.g. .../1-bedroom-1-
+    bath-26300, .../studio-1-bath-26173) -- reading it from there for an off-market
+    page (where the page text no longer states it) is using the site's own
+    structured URL data, not a guess."""
+    slug = url.rsplit("/", 1)[-1].lower()
+    if "studio" in slug:
+        return 0.0
+    match = re.search(r"(\d+)-bedroom", slug)
+    return float(match.group(1)) if match else None
 
 
 def _clean_building_name(raw: str) -> str:
@@ -92,6 +109,17 @@ class RelatedRentalsAdapter(BaseAdapter):
             return None
         return m.group(1).replace("-", " ").title()
 
+    @staticmethod
+    def _building_from_url(url: str) -> str | None:
+        """.../new-york-city/<neighborhood>/<building>/<unit-slug> -- used only for
+        the off-market branch, where the page's own "<Building> | <Address>" header
+        is replaced by a "<Neighborhood> <Bed/Bath summary> | <Address>" line
+        instead, so _ADDRESS_RE's group(1) is not a building name on those pages."""
+        m = re.search(r"/apartment-rentals/new-york-city/[a-z0-9-]+/([a-z0-9-]+)/[^/]+$", url)
+        if not m:
+            return None
+        return m.group(1).replace("-", " ").title()
+
     def _parse_unit_page(self, html: str, url: str) -> Listing | None:
         text = re.sub(r"<[^>]+>", " ", html)
         text = re.sub(r"\s+", " ", text)
@@ -101,16 +129,44 @@ class RelatedRentalsAdapter(BaseAdapter):
             return None
         building = _clean_building_name(addr_match.group(1))
         address = addr_match.group(2).strip()
+        neighborhood = self._neighborhood_from_url(url)
+
+        # No human-readable apartment number is exposed on the page, but every unit
+        # URL ends in its own numeric ID (see the -\d{4,}$ check in
+        # _collect_unit_urls) -- without this, dedupe.py's _similar() treats "both
+        # units unknown" as compatible and silently merges two different apartments
+        # in the same building into one listing, discarding the other's data.
+        unit_id_match = re.search(r"-(\d{4,})$", url)
+        unit = f"UNIT{unit_id_match.group(1)}" if unit_id_match else None
 
         detail_match = _DETAIL_RE.search(text[addr_match.end(): addr_match.end() + 300])
         if not detail_match:
+            if _OFF_MARKET_MARKER in text.lower():
+                # Never silently discard a stale listing -- classify it.
+                # classify_freshness (parsers/freshness.py) reads this marker
+                # straight from description and sets ActiveStatus.OFF_MARKET.
+                # `building` (addr_match group 1) is unreliable here -- the
+                # off-market page's header reads "<Neighborhood> <Bed/Bath> |
+                # <Address>", not "<Building> | <Address>", so group 1 is a
+                # bed/bath summary, not a building name. The URL's own building
+                # slug is reliable on both page types; use that instead.
+                off_market_building = self._building_from_url(url)
+                return Listing(
+                    source=self.name,
+                    listing_url=url,
+                    source_urls=[url],
+                    address=normalize_address(f"{off_market_building} {address}" if off_market_building else address),
+                    unit=unit,
+                    neighborhood=neighborhood,
+                    bedrooms=_bedrooms_from_url(url),
+                    description="No longer available per source page.",
+                )
             return None
         bed_label, baths, price_raw, available = detail_match.groups()
         bed_label_low = bed_label.strip().lower()
         bedrooms = 0.0 if "studio" in bed_label_low else float(re.search(r"[\d.]+", bed_label_low).group())
         rent = parse_rent(price_raw)
         furnished = "furnished" in text.lower()
-        neighborhood = self._neighborhood_from_url(url)
         pet_status, cat_allowed, dog_allowed = classify_pet_policy(None)
         doorman = "doorman" in text.lower() or None
 
@@ -119,6 +175,7 @@ class RelatedRentalsAdapter(BaseAdapter):
             listing_url=url,
             source_urls=[url],
             address=normalize_address(f"{building} {address}"),
+            unit=unit,
             neighborhood=neighborhood,
             bedrooms=bedrooms,
             bathrooms=float(baths),

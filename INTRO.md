@@ -4,12 +4,10 @@ Display this ASCII art on the first invocation of this skill in a session. Skip 
 invocations within the same session. Print it exactly as-is, then continue to Step 0.
 
 ```
- _   ___   ______      _          _     ____                      _
-| \ | \ \ / / ___|    / \   _ __ | |_  / ___|  ___  __ _ _ __ ___| |__
-|  \| |\ V / |       / _ \ | '_ \| __| \___ \ / _ \/ _` | '__/ __| '_ \
-| |\  | | || |___   / ___ \| |_) | |_   ___) |  __/ (_| | | | (__| | | |
-|_| \_| |_| \____| /_/   \_\ .__/ \__| |____/ \___|\__,_|_|  \___|_| |_|
-                           |_|
+.-. .-..-.  .-..---.      .--.  .----.  .--.  .----.  .---. .-.   .-..----..-. .-. .---.     .----..----.  .--.  .----.  .---. .-. .-.
+|  `| | \ \/ //  ___}    / {} \ | {}  }/ {} \ | {}  }{_   _}|  `.'  || {_  |  `| |{_   _}   { {__  | {_   / {} \ | {}  }/  ___}| {_} |
+| |\  |  }  { \     }   /  /\  \| .--'/  /\  \| .-. \  | |  | |\ /| || {__ | |\  |  | |     .-._} }| {__ /  /\  \| .-. \\     }| { } |
+`-' `-'  `--'  `---'    `-'  `-'`-'   `-'  `-'`-' `-'  `-'  `-' ` `-'`----'`-' `-'  `-'     `----' `----'`-'  `-'`-' `-' `---' `-' `-'
 
   Search and re-check public New York City rental listings, keeping a deduplicated,
   ranked, change-tracked shortlist over time. NYC is the only fixed setting -- area,

@@ -4,6 +4,40 @@ Semantic versioning: **patch** = bug fixes/wording, **minor** = new capability (
 **major** = breaking behavior change. Bump the version in `SKILL.md`'s frontmatter `version:`
 field and description, and in `INTRO.md`, with every change — add an entry here at the same time.
 
+## 2.7.0 — 2026-09-24
+
+Found on a genuinely clean second machine, running the skill for real for the first time (fresh
+git clone, real first-time-setup Q&A, a real search for a 2BR in the West Village under $8k with
+required in-unit laundry) -- not a hand-built test scenario:
+
+- **Critical bug: area-scoped search was completely broken for every listing going through the
+  shared JSON-LD path.** `listing_from_jsonld`'s `neighborhood=locality or
+  user_agent_neighborhood_hint` let schema.org's `addressLocality` field -- which is the postal
+  city ("New York" for every Manhattan address, regardless of neighborhood) -- silently override
+  the specific, reliable neighborhood hint an adapter passes only when it already knows the real
+  area (Douglas Elliman's URL is built directly from the configured neighborhood). The real,
+  observed effect: a live search for "West Village" returned **zero results**, even though real,
+  genuinely-in-area inventory existed -- unmistakable West Village addresses (87 Perry Street, 184
+  Waverly Place, 68 Bank Street, 28 Jones Street, 111 Barrow Street) all got
+  `neighborhood="New York"` instead of "West Village", failed the exact-match comparison against
+  the configured area, and were silently rejected as `OUT_OF_RANGE`.
+- Fixed by reordering precedence: the hint wins when an adapter provides one (it's only ever
+  passed when already confirmed reliable); `locality` remains the fallback for adapters that don't
+  pass a hint. Verified live, end to end: after the fix, all of the above addresses correctly
+  report `neighborhood="West Village"`, and a real listing (401 West Street, the Superior Ink
+  building) survived the full pipeline into the final ranked results for the first time. The
+  small remaining result count for that specific search is real and expected, not a bug --
+  West Village's largely pre-war housing stock plus a strict 2BR-minimum/$8k-budget/required-
+  in-unit-laundry combination genuinely narrows the field this much; the other real West Village
+  matches found were correctly rejected for genuine, visible reasons (over budget, under the
+  bedroom minimum), not silently dropped.
+- Deployed to a real `~/nyc-apartment-search/` project on a second machine as part of finding
+  this -- confirmed the codebase installs and all tests pass cleanly on Python 3.14.7 too (not
+  previously tested on this Python version).
+
+2 new tests (80 total): the exact West Village/`addressLocality="New York"` regression, plus a
+control test confirming sources that don't pass a hint are unaffected.
+
 ## 2.6.0 — 2026-09-23
 
 Kept going ("And?", again) -- this time asking why every single listing across this whole

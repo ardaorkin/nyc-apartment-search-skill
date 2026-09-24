@@ -111,3 +111,37 @@ def test_listing_from_jsonld_source_last_updated_defaults_to_none():
     block = {"name": "123 Main St", "offers": {"price": 3000}}
     listing = listing_from_jsonld(block, "test_source", "https://example.com/1")
     assert listing.source_last_updated is None
+
+
+def test_listing_from_jsonld_neighborhood_hint_wins_over_locality():
+    """Regression: schema.org's addressLocality is the postal city, not a
+    neighborhood -- a real Douglas Elliman listing in the West Village reported
+    addressLocality="New York" (the city), and the old `locality or
+    user_agent_neighborhood_hint` order let that silently override the specific,
+    reliable neighborhood hint an adapter passes only when it already knows the
+    real area (e.g. the URL was built from it). That defeated area-scoped search
+    entirely: a genuinely-in-area listing got neighborhood="New York", failed to
+    match the user's configured neighborhood, and was wrongly rejected as
+    OUT_OF_RANGE. Found via a real West Village search that returned zero
+    results despite real matching inventory existing."""
+    block = {
+        "name": "87 Perry Street",
+        "address": {"streetAddress": "87 Perry Street", "addressLocality": "New York"},
+        "offers": {"price": 21000},
+    }
+    listing = listing_from_jsonld(
+        block, "douglas_elliman", "https://example.com/1", user_agent_neighborhood_hint="West Village"
+    )
+    assert listing.neighborhood == "West Village"
+
+
+def test_listing_from_jsonld_locality_used_when_no_hint_given():
+    """Sources that don't pass a hint (most of them) keep using locality as
+    before -- this fix only reorders precedence, it doesn't remove locality."""
+    block = {
+        "name": "123 Main St",
+        "address": {"streetAddress": "123 Main St", "addressLocality": "Brooklyn"},
+        "offers": {"price": 3000},
+    }
+    listing = listing_from_jsonld(block, "test_source", "https://example.com/1")
+    assert listing.neighborhood == "Brooklyn"

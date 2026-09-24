@@ -209,7 +209,15 @@ def listing_from_jsonld(
         source_urls=[url],
         address=normalize_address(address),
         unit=extract_unit(name or ""),
-        neighborhood=locality or user_agent_neighborhood_hint,
+        # Hint wins when present, not locality -- schema.org's addressLocality is
+        # the postal city, not a neighborhood (Manhattan addresses report "New
+        # York" regardless of area), so it was silently overriding the specific,
+        # reliable hint an adapter passes only when it already knows the real
+        # neighborhood (e.g. Douglas Elliman's URL was built from it). That
+        # defeated the entire point of area-scoped search: a genuinely-in-area
+        # listing got neighborhood="New York", didn't match the user's configured
+        # neighborhood, and was silently rejected as OUT_OF_RANGE.
+        neighborhood=user_agent_neighborhood_hint or locality,
         street_number=str(extract_street_number(address)) if extract_street_number(address) else None,
         monthly_rent=rent,
         bedrooms=bedrooms,
